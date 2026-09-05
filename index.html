@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>富春江行：奇山異水</title>
+<title>山水問心：富春江行</title>
 <style>
   :root{
     --ink:#15241f;
@@ -16,17 +16,52 @@
   html,body{margin:0;height:100%;overflow:hidden;background:#0b1715;font-family:"Noto Serif TC","Microsoft JhengHei",serif;color:#fff}
   #wrap{position:relative;width:100%;height:100%;display:grid;place-items:center;background:radial-gradient(circle at center,#284e45 0%,#0b1715 72%)}
   canvas{display:block;width:min(100vw,177.777vh);height:min(56.25vw,100vh);max-width:100vw;max-height:100vh;background:#b9d5c7;box-shadow:0 0 60px #0009;image-rendering:auto}
-  #hudHint{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);font-size:14px;letter-spacing:.08em;color:#fff;opacity:.85;text-shadow:0 2px 4px #000;pointer-events:none;white-space:nowrap}
+  #hudHint{display:none}
   #nameInput{position:fixed;left:-10000px;top:0;width:1px;height:1px;opacity:0}
+  #touchControls{display:none;position:absolute;inset:0;z-index:12;pointer-events:none;touch-action:none;user-select:none;-webkit-user-select:none}
+  .touch-dpad{position:absolute;left:max(14px,env(safe-area-inset-left));bottom:max(14px,env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(3,clamp(46px,7vw,66px));grid-template-rows:repeat(3,clamp(42px,6.2vw,58px));gap:5px}
+  .touch-actions{position:absolute;right:max(14px,env(safe-area-inset-right));bottom:max(14px,env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(2,clamp(58px,8.5vw,82px));gap:8px;align-items:end}
+  .touch-btn{pointer-events:auto;border:2px solid #ead49a99;background:#153b35c9;color:#fff4cf;border-radius:16px;font:700 clamp(14px,2vw,19px)/1 "Microsoft JhengHei",sans-serif;box-shadow:0 4px 14px #0007;touch-action:none;min-height:44px}
+  .touch-btn.is-held{background:#b36a3de6;transform:translateY(2px);box-shadow:0 1px 6px #0008}
+  .touch-up{grid-column:2}.touch-left{grid-column:1;grid-row:2}.touch-down{grid-column:2;grid-row:2}.touch-right{grid-column:3;grid-row:2}
+  .touch-action{grid-column:2;grid-row:1 / span 2;border-radius:50%;min-height:clamp(92px,13vw,124px);background:#8e473bd9}
+  .touch-skill{grid-column:1;grid-row:1}.touch-run{grid-column:1;grid-row:2}.touch-pause{position:absolute;right:max(16px,env(safe-area-inset-right));top:max(14px,env(safe-area-inset-top));width:48px;height:42px}
+  #openingScreen{position:absolute;inset:0;z-index:30;display:grid;place-items:center;background:#030706;overflow:hidden}
+  #openingScreen.is-hidden{display:none}
+  #openingVideo{width:100%;height:100%;object-fit:contain;background:#000}
+  .opening-btn{position:absolute;border:2px solid #ead49a;background:#173b35e8;color:#fff2c8;border-radius:12px;padding:12px 24px;font:700 18px/1.2 "Microsoft JhengHei",sans-serif;box-shadow:0 5px 18px #0009;cursor:pointer}
+  #openingPlay{display:none;left:50%;top:50%;transform:translate(-50%,-50%);font-size:22px;padding:16px 32px}
+  #openingScreen.needs-play #openingPlay{display:block}
+  #openingSkip{right:22px;top:20px;background:#102a26c9}
   #rotate{display:none;position:absolute;inset:0;background:#0b1715;z-index:20;place-items:center;text-align:center;padding:30px;font-size:20px;line-height:1.8}
+  @media (pointer:coarse),(max-width:1100px){#touchControls{display:block}}
   @media (orientation:portrait){#rotate{display:grid}canvas,#hudHint{display:none}}
 </style>
 </head>
 <body>
 <div id="wrap">
-  <canvas id="game" width="1280" height="720" aria-label="富春江行：奇山異水橫向卷軸遊戲"></canvas>
+  <canvas id="game" width="1280" height="720" aria-label="山水問心：富春江行橫向卷軸遊戲"></canvas>
+  <div id="openingScreen" class="needs-play" aria-label="開場影片">
+    <video id="openingVideo" src="開頭影片剪.mp4" preload="auto" playsinline></video>
+    <button id="openingPlay" class="opening-btn" type="button">播放開場影片</button>
+    <button id="openingSkip" class="opening-btn" type="button">略過影片</button>
+  </div>
   <input id="nameInput" type="text" maxlength="16" autocomplete="nickname" aria-label="玩家姓名或代號" />
-  <div id="hudHint">WASD／方向鍵移動　Shift奔跑　J斬擊／蓄力／互動　L山水技能　P暫停</div>
+  <div id="hudHint">WASD／方向鍵移動與掌舵　空白鍵斬擊／蓄力／互動　W／S／方向鍵／數字鍵答題　P暫停</div>
+  <div id="touchControls" aria-label="行動裝置遊戲控制">
+    <div class="touch-dpad">
+      <button class="touch-btn touch-up" data-key="arrowup" aria-label="上">▲</button>
+      <button class="touch-btn touch-left" data-key="arrowleft" aria-label="左">◀</button>
+      <button class="touch-btn touch-down" data-key="arrowdown" aria-label="下">▼</button>
+      <button class="touch-btn touch-right" data-key="arrowright" aria-label="右">▶</button>
+    </div>
+    <div class="touch-actions">
+      <button class="touch-btn touch-skill" data-key="l" aria-label="山水清音">清音</button>
+      <button class="touch-btn touch-run" data-key="shift">奔跑</button>
+      <button class="touch-btn touch-action" data-key=" ">攻擊<br>互動</button>
+    </div>
+    <button class="touch-btn touch-pause" data-key="p" aria-label="暫停">Ⅱ</button>
+  </div>
   <div id="rotate">請將裝置橫向使用<br>以獲得完整的卷軸遊戲體驗</div>
 </div>
 <script>
@@ -35,8 +70,11 @@
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 const nameInput = document.getElementById('nameInput');
-const SUPABASE_URL='https://eoilagzgoidhblwzidhv.supabase.co';
-const SUPABASE_PUBLISHABLE_KEY='sb_publishable_kpnHLv4kjcZYQwanD3LqLQ__EuDCPFF';
+const touchControls = document.getElementById('touchControls');
+const openingScreen = document.getElementById('openingScreen');
+const openingVideo = document.getElementById('openingVideo');
+const openingPlay = document.getElementById('openingPlay');
+const openingSkip = document.getElementById('openingSkip');
 if (!CanvasRenderingContext2D.prototype.roundRect) {
   CanvasRenderingContext2D.prototype.roundRect = function(x,y,w,h,r=0){
     const rr = Math.min(Array.isArray(r)?r[0]:r, Math.abs(w)/2, Math.abs(h)/2);
@@ -49,21 +87,68 @@ const W = canvas.width, H = canvas.height;
 const chapterBackgrounds = [
   'assets/images/fuchun-bg-01-mist.png',
   'assets/images/fuchun-bg-02-drift.png',
-  'assets/images/fuchun-bg-03-clear.png',
+  'assets/images/fuchun-bg-03-clear-fish-v2.png',
+  'assets/images/fuchun-sound-valley-v1.png',
   'assets/images/fuchun-bg-04-rapids.png'
 ].map(src=>{const img=new Image();img.src=src;return img;});
+const worldMapSprite=new Image();
+worldMapSprite.src='assets/images/fuchun-world-map-concept-v1.png';
+const MAP_STAGES=[
+  {x:.15,y:.30,title:'第一關　風煙俱淨',subtitle:'霧江啟程・天山共色'},
+  {x:.35,y:.70,title:'第二關　從流飄蕩',subtitle:'扁舟入水・任意東西'},
+  {x:.61,y:.49,title:'第三關　水皆縹碧',subtitle:'游魚細石・桐廬渡口'},
+  {x:.83,y:.49,title:'第四關　寒樹成韻',subtitle:'泉鳥蟬猿・循聲入谷'},
+  {x:.83,y:.14,title:'終戰　急湍猛浪',subtitle:'奔浪水獸・決戰瀑谷'}
+];
+function smoothMapEdge(points,passes=3){
+  let edge=points;
+  for(let pass=0;pass<passes;pass++){
+    const next=[edge[0]];
+    for(let i=0;i<edge.length-1;i++){
+      const a=edge[i],b=edge[i+1];
+      next.push([a[0]*.75+b[0]*.25,a[1]*.75+b[1]*.25],[a[0]*.25+b[0]*.75,a[1]*.25+b[1]*.75]);
+    }
+    next.push(edge[edge.length-1]);edge=next;
+  }
+  return edge;
+}
+const MAP_EDGE_A=smoothMapEdge([[.24,0],[.22,.16],[.29,.34],[.24,.53],[.27,.72],[.19,.90],[.20,1]]);
+const MAP_EDGE_B=smoothMapEdge([[.58,0],[.55,.13],[.62,.34],[.56,.52],[.61,.70],[.55,.90],[.54,1]]);
+const MAP_EDGE_C_TOP=smoothMapEdge([[.82,0],[.79,.13],[.82,.25],[.78,.38],[.73,.48]]);
+const MAP_EDGE_C_BOTTOM=smoothMapEdge([[.73,.48],[.78,.61],[.73,.74],[.70,.88],[.70,1]]);
+const MAP_EDGE_D=smoothMapEdge([[.73,.48],[.83,.44],[.90,.46],[1,.42]]);
+const MAP_STAGE_SHAPES=[
+  [[0,0],...MAP_EDGE_A,[0,1]],
+  [MAP_EDGE_A[0],...MAP_EDGE_B,...MAP_EDGE_A.slice().reverse()],
+  [MAP_EDGE_B[0],...MAP_EDGE_C_TOP,...MAP_EDGE_C_BOTTOM.slice(1),...MAP_EDGE_B.slice().reverse()],
+  [...MAP_EDGE_D,[1,1],...MAP_EDGE_C_BOTTOM.slice().reverse()],
+  [MAP_EDGE_C_TOP[0],[1,0],[1,.42],...MAP_EDGE_D.slice(0,-1).reverse(),...MAP_EDGE_C_TOP.slice(1,-1).reverse()]
+];
+const boatCourseBackground=new Image();
+boatCourseBackground.src='assets/images/fuchun-boat-course-v2.png';
+const tongluFerryBackground=new Image();
+tongluFerryBackground.src='assets/images/tonglu-ferry-wuxia-v1.png';
+const heroBoatRearSprite=new Image();
+heroBoatRearSprite.src='assets/images/hero-boat-rear.png';
+const wuxiaSkiffRearSprite=new Image();
+wuxiaSkiffRearSprite.src='assets/images/wuxia-skiff-rear-no-oar.png';
+const wuxiaReefAtlas=new Image();
+wuxiaReefAtlas.src='assets/images/wuxia-reef-atlas.png';
+const fishingWuxiaBackground=new Image();
+fishingWuxiaBackground.src='assets/images/wuxia-fishing-bg-v2.png';
 const heroSprite=new Image();
 heroSprite.src='assets/images/hero-spritesheet.png';
 const heroAttackSprite=new Image();
 heroAttackSprite.src='assets/images/hero-attack-spritesheet.png';
-const heroBoatSprite=new Image();
-heroBoatSprite.src='assets/images/hero-boat-breeze.png';
-const ancientBoatSprite=new Image();
-ancientBoatSprite.src='assets/images/ancient-river-skiff.png';
 const enemyAtlasSprite=new Image();
 enemyAtlasSprite.src='assets/images/enemy-atlas-ink-v3-simple.png';
 const bossRiverSprite=new Image();
 bossRiverSprite.src='assets/images/boss-river-beast-ink-v3-simple.png';
+const bossLeapSprite=new Image();
+bossLeapSprite.src='assets/images/boss-river-beast-leap.png';
+const bossDefeatedSprite=new Image();
+bossDefeatedSprite.src='assets/images/boss-river-beast-defeated-v1.png';
+const RAINBOW_ELIXIR_COLORS=['#ed655d','#efa04c','#e7d35b','#69c77c','#55b9ca','#7582dc','#ad6dc8'];
 const ENEMY_ATLAS_FRAMES={
   mist:{col:0,row:0,w:128,h:132},mud:{col:1,row:0,w:132,h:132},
   current:{col:0,row:1,w:154,h:128},shadow:{col:1,row:1,w:128,h:150}
@@ -78,9 +163,23 @@ const QUIZ_BANK=[
 {id:7,chapter:2,type:'字詞',q:'「水皆縹碧」的「縹碧」是什麼顏色？',opts:['青白色','深黑色','金黃色','豔紅色'],ans:0,exp:'縹碧，青白色，寫富春江水清澄的色澤。'},
 {id:8,chapter:2,type:'修辭',q:'「千丈見底」使用了哪種修辭？',opts:['設問','轉化','誇飾','借代'],ans:2,exp:'江水未必真有千丈深，誇大其辭以強調水的清澈見底。'},
 {id:9,chapter:2,type:'文意',q:'「游魚細石，直視無礙」是如何表現水的清澈？',opts:['直接描寫水的顏色','藉水中魚、石清晰可見，從側面襯托','描寫水流的聲音','描寫水面的倒影'],ans:1,exp:'不直說水清，而寫水中景物一覽無遺，是側面描寫的手法。'},
-{id:10,chapter:3,type:'字詞',q:'「急湍甚箭」的「甚」意思是？',opts:['非常','甚至','嚴重','超過、勝過'],ans:3,exp:'「甚箭」即「甚於箭」，湍急的水流比箭還快。'},
-{id:11,chapter:3,type:'字詞',q:'「猛浪若奔」的「奔」指的是？',opts:['奔跑的動作','奔馳的馬','逃亡','水花'],ans:1,exp:'「奔」為動詞作名詞用，指奔馬；洶湧的浪如萬馬奔騰。'},
-{id:12,chapter:3,type:'修辭',q:'「急湍甚箭，猛浪若奔」主要使用哪些修辭？',opts:['譬喻兼誇飾','設問兼排比','映襯兼借代','頂真兼類疊'],ans:0,exp:'以箭、奔馬作比並加以誇大，與前文靜景「千丈見底」動靜相襯，寫盡「異水」二字。'}
+{id:10,chapter:4,type:'字詞',q:'「急湍甚箭」的「甚」意思是？',opts:['非常','甚至','嚴重','超過、勝過'],ans:3,exp:'「甚箭」即「甚於箭」，湍急的水流比箭還快。'},
+{id:11,chapter:4,type:'字詞',q:'「猛浪若奔」的「奔」指的是？',opts:['奔跑的動作','奔馳的馬','逃亡','水花'],ans:1,exp:'「奔」為動詞作名詞用，指奔馬；洶湧的浪如萬馬奔騰。'},
+{id:12,chapter:4,type:'修辭',q:'「急湍甚箭，猛浪若奔」主要使用哪些修辭？',opts:['譬喻兼誇飾','設問兼排比','映襯兼借代','頂真兼類疊'],ans:0,exp:'以箭、奔馬作比並加以誇大，與前文靜景「千丈見底」動靜相襯，寫盡「異水」二字。'}
+,
+{id:13,chapter:0,type:'文意',q:'「風煙俱淨」中的「淨」最能突顯景物的哪項特色？',opts:['喧鬧熱烈','澄澈明朗','幽暗陰森','繁華擁擠'],ans:1,exp:'風停霧散後，天地顯得澄澈明朗，為全文清麗的山水景色定下基調。'},
+{id:14,chapter:0,type:'結構',q:'文章先寫「奇山異水，天下獨絕」，再分寫山水，這是什麼結構？',opts:['總—分','分—總','因—果','問—答'],ans:0,exp:'先總括富春江山水之奇絕，再分別描寫異水與奇山，屬於總—分結構。'},
+{id:15,chapter:1,type:'字詞',q:'「一百許里」與「任意東西」兩句中，哪個詞表示約略數量？',opts:['一百','許','任意','東西'],ans:1,exp:'「許」放在數量詞之後，表示大約、左右。'},
+{id:16,chapter:1,type:'文意',q:'作者乘舟「任意東西」，最能表現哪一種遊覽方式？',opts:['依軍令急行','順流隨興而行','逆流競速','靠岸步行'],ans:1,exp:'作者把方向交給水流，乘一葉扁舟隨興遊覽，表現閒適自在。'},
+{id:17,chapter:2,type:'描寫',q:'「游魚細石，直視無礙」同時寫了水中哪兩種景物？',opts:['水草與沙洲','游魚與細石','蓮花與竹影','飛鳥與雲霧'],ans:1,exp:'魚與細石都能直接看清，從側面襯托江水清澈。'},
+{id:18,chapter:2,type:'文意',q:'「水皆縹碧，千丈見底」主要描寫富春江水的哪兩項特點？',opts:['清澈且深','混濁且淺','冰冷且急','溫暖且靜'],ans:0,exp:'「縹碧」寫水色，「千丈見底」以誇飾兼寫水深與清澈。'},
+{id:19,chapter:4,type:'比較',q:'「急湍甚箭」把急流與什麼相比？',opts:['飛鳥','利箭','奔馬','雷聲'],ans:1,exp:'「甚箭」意指比箭還快，以比較和誇飾突顯水流迅疾。'},
+{id:20,chapter:4,type:'文意',q:'「猛浪若奔」中的「若」可解作什麼？',opts:['如果','你','像、如同','及、和'],ans:2,exp:'「若」是像、如同；猛浪好像奔馳的馬群。'},
+{id:21,chapter:3,type:'文意',q:'「夾岸高山，皆生寒樹」描寫了什麼環境？',opts:['兩岸高山長滿耐寒常綠的樹木','平原遍植花木','江面結滿冰層','村落炊煙密布'],ans:0,exp:'夾岸的高山上生長著使人感到寒意的常綠樹木，營造高峻幽深的氣氛。'},
+{id:22,chapter:3,type:'字詞',q:'「負勢競上」的「負」意思是？',opts:['失敗','背負、憑藉','欠缺','遭受'],ans:1,exp:'山巒憑藉高峻的地勢爭相向上，形成立體而富動勢的山景。'},
+{id:23,chapter:3,type:'修辭',q:'「爭高直指，千百成峰」主要運用哪一種寫法？',opts:['把山峰人格化，寫出競逐向上的姿態','用問句引起思考','以聲音反襯寂靜','用顏色象徵季節'],ans:0,exp:'「爭高」「直指」賦予山峰人的意志與動作，使靜態山勢充滿向上的力量。'},
+{id:24,chapter:3,type:'聲音',q:'「泠泠作響」描寫的是哪一種聲音？',opts:['泉水衝擊石頭的清越聲','猿猴的長嘯','蟬的連續鳴叫','風穿過竹林'],ans:0,exp:'「泉水激石，泠泠作響」以清亮的擬聲詞寫泉流撞擊岩石。'},
+{id:25,chapter:3,type:'聲音',q:'文中以「嚶嚶成韻」描寫哪一種聲音？',opts:['好鳥彼此和鳴','猛浪拍岸','戰鼓齊鳴','樵夫歌唱'],ans:0,exp:'好鳥相互鳴叫，嚶嚶之聲和諧成韻，與泉、蟬、猿共同構成山林聲景。'}
 ];
 const CHARGE_TIME=1;
 const keys = Object.create(null);
@@ -90,13 +189,13 @@ let last = 0;
 let gameState = 'title';
 let paused = false;
 let level = 0;
+let mapTransition = null;
 let cameraX = 0;
 let shake = 0;
 let flash = 0;
 let message = '';
 let messageTimer = 0;
 let chapterTitle = '';
-let chapterSub = '';
 let chapterTimer = 0;
 let score = 0;
 let combo = 0;
@@ -106,15 +205,35 @@ let currentQuote = '';
 let quoteTimer = 0;
 let fishing = null;
 let fishingTriggered = false;
+let soundGame = null;
 let activeQuiz = null;
 let quizTotal = 0;
 let quizCorrect = 0;
 let wrongIds = [];
-let quizUsedByChapter = [new Set(),new Set(),new Set(),new Set()];
+let examStarted = false;
 let leaderboard = {name:'',rows:[],loading:false,submitting:false,submitted:false,message:'',error:''};
+const LOCAL_LEADERBOARD_KEY='fuchun_local_scores_v1';
+let localScoreFallback=[];
 const ENDING_UI={input:{x:82,y:342,w:455,h:58},submit:{x:82,y:420,w:455,h:54},restart:{x:82,y:594,w:455,h:42}};
+const CELEBRATION_UI={continue:{x:W/2-180,y:578,w:360,h:58}};
 let audioEnabled = true;
 let audioCtx = null;
+const backgroundMusic=new Audio('江上泛舟.mp3');
+backgroundMusic.preload='auto';backgroundMusic.playsInline=true;backgroundMusic.loop=true;backgroundMusic.volume=.32;backgroundMusic.load();
+let backgroundMusicPlayPending=false;
+let openingActive=true;
+let openingAwaitingMetadata=false;
+const natureAudio={
+  spring:new Audio('流水聲.mp3'),
+  bird:new Audio('鳥鳴聲.mp3'),
+  cicada:new Audio('蟬聲.mp3'),
+  monkey:new Audio('猿叫聲.mp3')
+};
+for(const audio of Object.values(natureAudio)){audio.preload='auto';audio.playsInline=true;audio.load();}
+const natureSpatialAudioEnabled=location.protocol!=='file:';
+const natureAudioNodes=new Map();
+let activeNatureAudio=null;
+let natureStopTimer=null;
 
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp=(a,b,t)=>a+(b-a)*t;
@@ -122,10 +241,37 @@ const rand=(a,b)=>a+Math.random()*(b-a);
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 
 function ensureAudio(){
-  if(!audioEnabled) return;
+  if(!audioEnabled)return Promise.resolve(false);
   if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
-  if(audioCtx.state==='suspended') audioCtx.resume();
+  if(audioCtx.state==='suspended')return audioCtx.resume().then(()=>true).catch(()=>false);
+  return Promise.resolve(audioCtx.state==='running');
 }
+function playBackgroundMusic(){
+  if(!audioEnabled||level===3||!backgroundMusic.paused||backgroundMusicPlayPending)return Promise.resolve(false);
+  backgroundMusicPlayPending=true;
+  return Promise.resolve(backgroundMusic.play()).then(()=>true).catch(error=>{console.warn('背景音樂播放失敗，等待下一次操作重試',error);return false;}).finally(()=>{backgroundMusicPlayPending=false;});
+}
+function pauseBackgroundMusic(){backgroundMusic.pause();}
+function finishOpening(){
+  if(!openingActive)return;
+  openingActive=false;openingVideo.pause();openingScreen.classList.add('is-hidden');
+}
+function playOpeningVideo(){
+  if(!openingActive)return;
+  if(openingVideo.readyState<1){
+    if(!openingAwaitingMetadata){openingAwaitingMetadata=true;openingVideo.addEventListener('loadedmetadata',playOpeningVideo,{once:true});}
+    return;
+  }
+  openingAwaitingMetadata=false;
+  const result=openingVideo.play();
+  if(result)result.then(()=>openingScreen.classList.remove('needs-play')).catch(()=>openingScreen.classList.add('needs-play'));
+}
+openingVideo.addEventListener('playing',()=>openingScreen.classList.remove('needs-play'));
+openingVideo.addEventListener('pause',()=>{if(openingActive&&!openingVideo.ended)openingScreen.classList.add('needs-play');});
+openingVideo.addEventListener('ended',finishOpening);
+openingVideo.addEventListener('error',finishOpening);
+openingPlay.addEventListener('click',playOpeningVideo);
+openingSkip.addEventListener('click',finishOpening);
 function tone(freq=440,dur=.08,type='sine',vol=.05){
   if(!audioEnabled) return;
   ensureAudio();
@@ -135,8 +281,50 @@ function tone(freq=440,dur=.08,type='sine',vol=.05){
   const t=audioCtx.currentTime; g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(.0001,t+dur);
   o.start(t); o.stop(t+dur);
 }
+function impactNoise(dur=.055,vol=.045){
+  if(!audioEnabled)return;ensureAudio();
+  const length=Math.max(1,Math.floor(audioCtx.sampleRate*dur)),buffer=audioCtx.createBuffer(1,length,audioCtx.sampleRate),data=buffer.getChannelData(0);
+  for(let i=0;i<length;i++)data[i]=(Math.random()*2-1)*(1-i/length);
+  const source=audioCtx.createBufferSource(),filter=audioCtx.createBiquadFilter(),gain=audioCtx.createGain(),t=audioCtx.currentTime;
+  source.buffer=buffer;filter.type='lowpass';filter.frequency.value=720;gain.gain.setValueAtTime(vol,t);gain.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  source.connect(filter);filter.connect(gain);gain.connect(audioCtx.destination);source.start(t);
+}
+function stopNatureSound(){
+  if(natureStopTimer){clearTimeout(natureStopTimer);natureStopTimer=null;}
+  if(activeNatureAudio){activeNatureAudio.pause();activeNatureAudio.currentTime=0;activeNatureAudio=null;}
+}
+function connectNatureAudio(kind,pan){
+  if(!natureSpatialAudioEnabled||!audioCtx||audioCtx.state!=='running')return null;
+  let node=natureAudioNodes.get(kind);
+  if(!node){
+    const source=audioCtx.createMediaElementSource(natureAudio[kind]),gain=audioCtx.createGain(),panner=audioCtx.createStereoPanner?audioCtx.createStereoPanner():null;
+    source.connect(gain);if(panner){panner.panningModel='equalpower';gain.connect(panner);panner.connect(audioCtx.destination)}else gain.connect(audioCtx.destination);
+    node={gain,panner};natureAudioNodes.set(kind,node);
+  }
+  node.gain.gain.value=1.05;if(node.panner)node.panner.pan.value=pan;
+  return node;
+}
+function playNatureSound(kind,pan=0){
+  if(!audioEnabled||!natureAudio[kind])return Promise.resolve(false);
+  const audioReady=natureSpatialAudioEnabled?ensureAudio():Promise.resolve(false);stopNatureSound();
+  const audio=natureAudio[kind];
+  connectNatureAudio(kind,pan);
+  audio.muted=false;audio.volume=1;audio.currentTime=0;activeNatureAudio=audio;
+  const playback=audio.play();
+  return playback.then(async()=>{
+    const ready=await audioReady;
+    if(ready)connectNatureAudio(kind,pan);
+    if(natureAudioNodes.has(kind)&&audioCtx.state!=='running'){stopNatureSound();return false;}
+    natureStopTimer=setTimeout(stopNatureSound,4200);return true;
+  }).catch(error=>{
+    activeNatureAudio=null;console.warn('自然聲音播放失敗',error);return false;
+  });
+}
 function sfx(name){
-  if(name==='hit'){tone(150,.05,'square',.08);tone(90,.08,'sawtooth',.04)}
+  if(name==='hit'){impactNoise(.05,.042);tone(165,.045,'square',.075);setTimeout(()=>tone(92,.075,'sawtooth',.04),14)}
+  if(name==='heavyHit'){impactNoise(.085,.065);tone(120,.07,'square',.09);setTimeout(()=>tone(62,.13,'sawtooth',.055),20)}
+  if(name==='bossHit'){impactNoise(.09,.07);tone(88,.08,'square',.085);setTimeout(()=>tone(48,.16,'sawtooth',.06),24)}
+  if(name==='bossHeavyHit'){impactNoise(.12,.09);tone(72,.1,'square',.1);setTimeout(()=>tone(38,.2,'sawtooth',.07),22)}
   if(name==='swing'){tone(520,.035,'triangle',.025)}
   if(name==='collect'){tone(660,.08,'sine',.05);setTimeout(()=>tone(880,.1,'sine',.04),55)}
   if(name==='hurt'){tone(110,.12,'sawtooth',.06)}
@@ -144,6 +332,7 @@ function sfx(name){
   if(name==='clear'){[523,659,784,1046].forEach((f,i)=>setTimeout(()=>tone(f,.18,'sine',.045),i*100))}
   if(name==='dash'){tone(280,.06,'triangle',.035)}
   if(name==='skill'){[330,440,660].forEach((f,i)=>setTimeout(()=>tone(f,.14,'sine',.05),i*55))}
+  if(name==='gameOver'){impactNoise(.34,.075);[294,220,165,110].forEach((f,i)=>setTimeout(()=>tone(f,.28,'sawtooth',.055),i*150))}
 }
 
 nameInput.addEventListener('input',()=>{leaderboard.name=nameInput.value.slice(0,16);});
@@ -155,13 +344,20 @@ nameInput.addEventListener('keyup',e=>e.stopPropagation());
 
 window.addEventListener('keydown',e=>{
   const k=e.key.toLowerCase();
+  if(openingActive){
+    if(['enter',' ','escape'].includes(k))e.preventDefault();
+    if(k==='enter'||k===' ')playOpeningVideo();else if(k==='escape')finishOpening();
+    return;
+  }
   if(!keys[k]) pressed[k]=true;
   keys[k]=true;
   if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k)) e.preventDefault();
   ensureAudio();
+  if(level!==3&&(gameState!=='title'||k==='enter'))playBackgroundMusic();
+  if(soundGame&&soundGame.active&&k===' '&&soundGame.clueDelay<=0&&soundGame.replayCooldown<=0)playSoundClue();
 });
-window.addEventListener('keyup',e=>{const k=e.key.toLowerCase();keys[k]=false;released[k]=true;});
-window.addEventListener('blur',()=>{for(const k in keys)keys[k]=false;paused=true;});
+window.addEventListener('keyup',e=>{if(openingActive)return;const k=e.key.toLowerCase();keys[k]=false;released[k]=true;});
+window.addEventListener('blur',()=>{for(const k in keys)keys[k]=false;if(!activeQuiz&&!matchMedia('(pointer:coarse)').matches)paused=true;});
 
 const particles=[];
 function particle(x,y,opt={}){
@@ -185,32 +381,34 @@ function makePlayer(){return {x:180,y:500,w:58,h:100,speed:260,hp:100,maxHp:100,
 
 function enemy(type,x,y){
   const data={
-    mist:{w:66,h:80,hp:38,speed:80,color:'#596f6b',name:'濁霧靈',damage:8},
-    mud:{w:72,h:76,hp:52,speed:55,color:'#705d43',name:'泥石怪',damage:10},
-    current:{w:84,h:62,hp:64,speed:95,color:'#3f7f89',name:'逆流獸',damage:12},
-    shadow:{w:68,h:96,hp:78,speed:85,color:'#413d50',name:'世務影兵',damage:14}
+    mist:{w:66,h:80,hp:38,speed:80,color:'#596f6b',name:'鳶飛戾天',damage:8},
+    mud:{w:72,h:76,hp:52,speed:55,color:'#705d43',name:'經綸事務',damage:10},
+    current:{w:84,h:62,hp:64,speed:95,color:'#3f7f89',name:'案牘勞形',damage:12},
+    shadow:{w:68,h:96,hp:78,speed:85,color:'#413d50',name:'宵衣旰食',damage:14}
   }[type];
-  return {type,x,y,...data,maxHp:data.hp,face:-1,attack:0,hurt:0,dead:false,death:0,cool:rand(.3,1),vx:0,anim:rand(0,9),elite:false};
+  return {type,x,y,...data,maxHp:data.hp,face:-1,attack:0,hurt:0,dead:false,death:0,cool:rand(.3,1),vx:0,anim:rand(0,9),elite:false,moving:false,recoilDir:0,hitStrength:1,stepTimer:rand(0,.2)};
 }
 
 function setMessage(text,time=2.4){message=text;messageTimer=time;}
 function setQuote(text,time=3.2){currentQuote=text;quoteTimer=time;}
-function chapter(a,b){chapterTitle=a;chapterSub=b;chapterTimer=3.2;}
+function chapter(a){chapterTitle=a;chapterTimer=3.2;}
 
-function leaderboardConfigured(){return SUPABASE_PUBLISHABLE_KEY.startsWith('sb_publishable_');}
 function pointInRect(x,y,r){return x>=r.x&&x<=r.x+r.w&&y>=r.y&&y<=r.y+r.h;}
 
-async function loadLeaderboard(){
-  if(!leaderboardConfigured()){leaderboard.error='排行榜尚未連線';return;}
-  leaderboard.loading=true;leaderboard.error='';
-  try{
-    const query='select=player_name,score,quiz_correct,quiz_total,seals,created_at&order=score.desc,quiz_correct.desc,created_at.asc&limit=10';
-    const response=await fetch(`${SUPABASE_URL}/rest/v1/game_scores?${query}`,{headers:{apikey:SUPABASE_PUBLISHABLE_KEY}});
-    if(!response.ok)throw new Error(`HTTP ${response.status}`);
-    leaderboard.rows=await response.json();
-  }catch(error){
-    leaderboard.error='暫時無法讀取排行榜';
-  }finally{leaderboard.loading=false;}
+function rankLocalScores(rows){
+  return rows.filter(row=>row&&typeof row.player_name==='string').sort((a,b)=>b.score-a.score||b.quiz_correct-a.quiz_correct||a.created_at-b.created_at).slice(0,10);
+}
+function readLocalScores(){
+  try{const raw=localStorage.getItem(LOCAL_LEADERBOARD_KEY);if(raw!==null){const saved=JSON.parse(raw);if(Array.isArray(saved))localScoreFallback=rankLocalScores(saved);}}catch(error){}
+  return localScoreFallback.slice();
+}
+function saveLocalScores(rows){
+  localScoreFallback=rankLocalScores(rows);
+  try{localStorage.setItem(LOCAL_LEADERBOARD_KEY,JSON.stringify(localScoreFallback));}catch(error){}
+  return localScoreFallback.slice();
+}
+function loadLeaderboard(){
+  leaderboard.loading=false;leaderboard.error='';leaderboard.rows=readLocalScores();
 }
 
 function openEndingLeaderboard(){
@@ -222,85 +420,89 @@ function openEndingLeaderboard(){
   setTimeout(()=>nameInput.focus(),0);
 }
 
-async function submitLeaderboardScore(){
+function submitLeaderboardScore(){
   if(gameState!=='ending'||leaderboard.submitting||leaderboard.submitted)return;
   const playerName=nameInput.value.replace(/[<>\u0000-\u001f\u007f]/g,'').replace(/\s+/g,' ').trim().slice(0,16);
   leaderboard.name=playerName;nameInput.value=playerName;
   if(!playerName){leaderboard.error='請輸入姓名或代號';nameInput.focus();return;}
-  if(!leaderboardConfigured()){leaderboard.error='排行榜尚未連線';return;}
-  leaderboard.submitting=true;leaderboard.error='';leaderboard.message='正在送出成績…';
-  try{
-    const payload={player_name:playerName,score,quiz_correct:quizCorrect,quiz_total:quizTotal,seals:collected.length};
-    const response=await fetch(`${SUPABASE_URL}/rest/v1/game_scores`,{
-      method:'POST',headers:{apikey:SUPABASE_PUBLISHABLE_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(payload)
-    });
-    if(!response.ok)throw new Error(`HTTP ${response.status}`);
-    leaderboard.submitted=true;leaderboard.message='成績已登錄！';nameInput.blur();sfx('clear');
-    try{localStorage.setItem('fuchun_player_name',playerName);}catch(error){}
-    await loadLeaderboard();
-  }catch(error){
-    leaderboard.message='';leaderboard.error='送出失敗，請檢查網路後再試';
-  }finally{leaderboard.submitting=false;}
+  leaderboard.submitting=true;leaderboard.error='';leaderboard.message='正在加入本機排名…';
+  const payload={player_name:playerName,score,quiz_correct:quizCorrect,quiz_total:quizTotal,seals:collected.length,created_at:Date.now()};
+  leaderboard.rows=saveLocalScores([...readLocalScores(),payload]);
+  leaderboard.submitted=true;leaderboard.submitting=false;leaderboard.message='成績已加入本機排名！';nameInput.blur();sfx('clear');
+  try{localStorage.setItem('fuchun_player_name',playerName);}catch(error){}
 }
 
-function restartFromEnding(){nameInput.blur();gameState='play';resetGame();}
+function restartFromEnding(){nameInput.blur();backgroundMusic.currentTime=0;gameState='play';resetGame();}
 function handleEndingPointer(x,y){
   if(pointInRect(x,y,ENDING_UI.input)){nameInput.focus();return;}
   if(pointInRect(x,y,ENDING_UI.submit)){submitLeaderboardScore();return;}
   if(pointInRect(x,y,ENDING_UI.restart))restartFromEnding();
 }
+function openVictoryCelebration(){gameState='celebration';touchControls.style.visibility='hidden';sfx('clear');}
+function handleCelebrationPointer(x,y){if(pointInRect(x,y,CELEBRATION_UI.continue))startLevel(5);}
+function openStageMap(stage){mapTransition={stage,time:0,duration:3.4};gameState='map';touchControls.style.visibility='hidden';sfx('collect');}
+function enterStageFromMap(){if(!mapTransition)return;mapTransition=null;gameState='play';touchControls.style.visibility=level===3?'hidden':'';}
 
 function resetGame(){
   paused=false;
-  score=0; combo=0; collected=[]; level=0; player=makePlayer();fishing=null;fishingTriggered=false;activeQuiz=null;
-  quizTotal=0;quizCorrect=0;wrongIds=[];quizUsedByChapter=[new Set(),new Set(),new Set(),new Set()];
+  score=0; combo=0; collected=[]; level=0; player=makePlayer();fishing=null;fishingTriggered=false;soundGame=null;activeQuiz=null;
+  quizTotal=0;quizCorrect=0;wrongIds=[];examStarted=false;
   startLevel(0);
 }
 
 function startLevel(n){
-  level=n; levelClear=false; transitionTimer=0; mini=null; boss=null;fishing=null;activeQuiz=null;
+  stopNatureSound();
+  level=n; levelClear=false; transitionTimer=0; mini=null; boss=null;fishing=null;soundGame=null;activeQuiz=null;examStarted=false;
+  if(n===3)pauseBackgroundMusic();else if(n>=0&&n<MAP_STAGES.length)playBackgroundMusic();
   if(n===2)fishingTriggered=false;
   player=makePlayer(); enemies=[]; objects=[]; projectiles=[]; particles.length=0; cameraX=0;
   if(n===0){
     worldLength=3500; goalX=3220;
-    chapter('第一章　風煙俱淨','擊散濁霧，讓天光與遠山重新相接');
-    setQuote('風煙俱淨，天山共色。',4);
-    const xs=[650,850,1110,1450,1690,1940,2280,2520,2800];
-    xs.forEach((x,i)=>enemies.push(enemy(i%3===0?'mud':'mist',x,rand(430,575))));
-    objects.push({type:'seal',x:1220,y:420,text:'天山共色',got:false});
-    objects.push({type:'seal',x:2140,y:500,text:'風煙俱淨',got:false});
+    chapter('第一章　風煙俱淨');
+    const xs=[580,760,940,1160,1360,1540,1740,1940,2140,2330,2510,2690,2870,3060];
+    xs.forEach((x,i)=>enemies.push(enemy(i%5===3?'current':i%3===0?'mud':'mist',x,rand(430,575))));
+    [{x:1350,idiom:'閒情逸致'},{x:2720,idiom:'賞心悅目'}].forEach(o=>objects.push({type:'healing',...o,y:410,got:false,amount:28}));
     objects.push({type:'gate',x:3220,y:440,text:'前往富春江水道'});
   }else if(n===1){
-    worldLength=4200; goalX=3900;
-    chapter('第二章　從流飄蕩','乘一葉扁舟，順應水勢，任意東西');
-    setQuote('從流飄蕩，任意東西。',4);
+    worldLength=8000; goalX=7600;
+    chapter('第二章　從流飄蕩');
     player.y=470;
-    mini={type:'boat',distance:0,lane:1,vy:0,rocks:[],tokens:[],spawn:0,tokenSpawn:0,done:false};
-    objects.push({type:'seal',x:1320,y:410,text:'從流飄蕩',got:false});
-    objects.push({type:'seal',x:2450,y:580,text:'任意東西',got:false});
+    mini={type:'boat',distance:0,courseLength:7200,boatX:W/2,steer:0,speed:245,minSpeed:145,maxSpeed:360,rocks:[],rockSpawn:.9,hull:4,maxHull:4,inv:0,done:false,arriving:false,arrivalTimer:0,time:0,milestones:[{at:2400,text:'從流飄蕩',got:false},{at:5100,text:'任意東西',got:false}],bonuses:[{at:900,lane:-.48,idiom:'悠然自得',spawned:false,got:false,z:1},{at:3100,lane:.42,idiom:'閒情逸致',spawned:false,got:false,z:1},{at:5450,lane:-.18,idiom:'逍遙自在',spawned:false,got:false,z:1}]};
   }else if(n===2){
     worldLength=3700; goalX=3400;
-    chapter('第三章　水皆縹碧','觀察游魚細石，恢復澄澈江水');
-    setQuote('水皆縹碧，千丈見底。游魚細石，直視無礙。',5);
-    [700,960,1280,1600,1920,2300,2600].forEach((x,i)=>enemies.push(enemy(i%2?'mud':'mist',x,rand(440,575))));
-    for(let i=0;i<8;i++)objects.push({type:i%2?'fish':'stone',x:520+i*320,y:rand(440,590),seen:false,got:false});
-    objects.push({type:'seal',x:1810,y:405,text:'直視無礙',got:false});
-    objects.push({type:'seal',x:2760,y:535,text:'千丈見底',got:false});
-    objects.push({type:'gate',x:3400,y:440,text:'進入急湍峽谷'});
+    chapter('第三章　水皆縹碧');
+    const xs=[620,790,980,1170,1370,1560,1760,1960,2150,2340,2530,2720,2910,3100,3250];
+    xs.forEach((x,i)=>enemies.push(enemy(i%4===2?'shadow':i%5===3?'current':i%2?'mud':'mist',x,rand(430,575))));
+    [{x:1280,idiom:'神清氣爽'},{x:2760,idiom:'怡然自得'}].forEach(o=>objects.push({type:'healing',...o,y:410,got:false,amount:28}));
+    for(let i=0;i<6;i++)objects.push({type:i%2?'fish':'stone',x:620+i*430,y:rand(440,590),seen:false,got:false});
+    objects.push({type:'gate',x:3400,y:440,text:'循聲進入寒樹谷'});
   }else if(n===3){
-    worldLength=2600; goalX=2300;
-    chapter('終戰　急湍猛浪','以山水之勢，平息奔浪水獸');
-    setQuote('急湍甚箭，猛浪若奔。',4);
-    player.x=240;player.y=510;
-    objects.push({type:'seal',x:650,y:445,text:'急湍甚箭',got:false});
-    objects.push({type:'seal',x:1120,y:540,text:'猛浪若奔',got:false});
-    boss={x:1800,y:410,w:240,h:190,hp:420,maxHp:420,phase:1,attack:0,cool:2.2,hurt:0,dead:false,time:0,face:-1};
+    worldLength=W;goalX=W;
+    chapter('第四章　寒樹成韻');
+    startSoundGame();
   }else if(n===4){
-    gameState='ending';openEndingLeaderboard();
+    worldLength=2600; goalX=2300;
+    chapter('終戰　急湍猛浪');
+    player.x=240;player.y=510;
+    [{x:760,idiom:'逍遙自在'},{x:1320,idiom:'心曠神怡'}].forEach(o=>objects.push({type:'healing',...o,y:405,got:false,amount:30}));
+    boss={x:1800,y:410,w:240,h:190,hp:420,maxHp:420,phase:1,attack:0,cool:2.2,hurt:0,dead:false,defeatTimer:0,celebrationShown:false,time:0,face:-1,hitDir:1,hitStrength:1,leap:0,leapDuration:1.08,leapStartX:0,leapStartY:0,leapTargetX:0,leapTargetY:410};
+  }else if(n===5){
+    gameState='ending';touchControls.style.visibility='hidden';openEndingLeaderboard();
   }
+  if(n>=0&&n<MAP_STAGES.length)openStageMap(n);
 }
 
 function rects(a,b,pad=0){return a.x+pad < b.x+b.w-pad && a.x+a.w-pad > b.x+pad && a.y+pad < b.y+b.h-pad && a.y+a.h-pad > b.y+pad;}
+function isOnScreen(o){return o.x+o.w>cameraX&&o.x<cameraX+W&&o.y+o.h>0&&o.y<H;}
+function clipToScreen(o){
+  const x=Math.max(o.x,cameraX),right=Math.min(o.x+o.w,cameraX+W);
+  return right>x?{...o,x,w:right-x}:null;
+}
+function bossTouchesPlayer(b){
+  const bossBody={x:b.x+18,y:b.y+18,w:b.w-36,h:b.h-28};
+  const playerBody={x:player.x+10,y:player.y-20,w:player.w-20,h:player.h+12};
+  return rects(bossBody,playerBody);
+}
 
 function damagePlayer(amount,fromX){
   if(activeQuiz||player.inv>0||player.dash>0||gameState!=='play')return;
@@ -308,33 +510,40 @@ function damagePlayer(amount,fromX){
   player.hp-=amount;player.hurt=.35;player.inv=.9;shake=12;flash=.08;sfx('hurt');
   player.x+=fromX<player.x?55:-55;
   combo=0;
-  if(player.hp<=0){player.hp=0;gameState='gameover';}
+  if(player.hp<=0){player.hp=0;gameState='gameover';sfx('gameOver');}
 }
 
-function damageEnemy(e,amount,knock=45){
+function damageEnemy(e,amount,knock=45,hitDir=player.face){
   if(e.dead||e.hurt>0)return;
-  e.hp-=amount;e.hurt=.18;e.x+=player.face*knock;shake=6;inkBurst(e.x+e.w/2,e.y+e.h/2,10);sfx('hit');
+  const heavy=knock>=80,hitX=e.x+e.w/2,hitY=e.y+e.h/2;
+  e.hp-=amount;e.hurt=heavy?.3:.23;e.recoilDir=hitDir;e.hitStrength=heavy?1.45:1;e.x+=hitDir*knock;shake=heavy?10:6;
+  inkBurst(hitX,hitY,heavy?18:11);burst(hitX,hitY,heavy?'#f3d88a':'#d8e6d8',heavy?9:5);sfx(heavy?'heavyHit':'hit');
   combo++;comboTimer=2;score+=10*combo;player.spirit=clamp(player.spirit+4,0,player.maxSpirit);
-  if(e.hp<=0){e.dead=true;e.death=.55;score+=100;burst(e.x+e.w/2,e.y+20,'#d8cfad',18);}
+  if(e.hp<=0){e.dead=true;e.death=.65;score+=100;burst(e.x+e.w/2,e.y+20,'#d8cfad',22);}
 }
 
-function pickQuiz(chapter,excludeId=null){
-  const pool=QUIZ_BANK.filter(q=>q.chapter===chapter);
-  const used=quizUsedByChapter[chapter];
-  let available=pool.filter(q=>!used.has(q.id));
-  if(!available.length){used.clear();available=pool.filter(q=>q.id!==excludeId);}
-  const question=available[Math.floor(Math.random()*available.length)];
-  used.add(question.id);
-  return question;
+function dispelWaves(hitbox){
+  let cleared=0;
+  for(const wave of projectiles){
+    if(wave.type!=='wave'||wave.life<=0||!rects(hitbox,wave,0))continue;
+    wave.life=0;cleared++;burst(wave.x+wave.w/2,wave.y+wave.h/2,'#dff4e8',12);
+  }
+  if(cleared){score+=cleared*35;shake=Math.max(shake,4);sfx('hit');setMessage(`劍勢破浪！化解 ${cleared} 道攻勢`,1.1);}
+  return cleared;
 }
 
-function openSealQuiz(seal){
-  activeQuiz={mode:'seal',chapter:level,question:pickQuiz(level),seal,answered:false,selected:-1,correct:false,feedbackTime:0,optionRects:[]};
+function shuffled(items){
+  const result=[...items];
+  for(let i=result.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[result[i],result[j]]=[result[j],result[i]];}
+  return result;
 }
 
-function openGateQuiz(onCorrect){
-  if(activeQuiz)return;
-  activeQuiz={mode:'gate',chapter:level,question:pickQuiz(level),onCorrect,answered:false,selected:-1,correct:false,feedbackTime:0,optionRects:[]};
+function openChapterExam(onComplete){
+  if(activeQuiz||examStarted)return;
+  examStarted=true;
+  const questions=shuffled(QUIZ_BANK.filter(q=>q.chapter===level)).slice(0,5);
+  activeQuiz={mode:'academy',chapter:level,questions,index:0,question:questions[0],onComplete,answered:false,selected:-1,cursor:0,correct:false,feedbackTime:0,correctCount:0,optionRects:[]};
+  setQuote('泊舟入學堂，完成五題再啟程。',2.2);
 }
 
 function answerQuiz(index){
@@ -343,17 +552,11 @@ function answerQuiz(index){
   activeQuiz.answered=true;activeQuiz.selected=index;activeQuiz.correct=index===q.ans;
   quizTotal++;
   if(activeQuiz.correct){
-    quizCorrect++;
-    if(activeQuiz.mode==='seal'){
-      const seal=activeQuiz.seal;seal.got=true;collected.push(seal.text);
-      if(!seal.quizHadWrong){score+=300;player.spirit=clamp(player.spirit+30,0,100);}
-      sfx('collect');setQuote('獲得山水印記：'+seal.text,2.6);burst(seal.x,seal.y,'#f5d77a',24);
-    }else if(activeQuiz.onCorrect){activeQuiz.onCorrect();}
-    activeQuiz.feedbackTime=2.5;
+    quizCorrect++;activeQuiz.correctCount++;score+=200;sfx('collect');
+    activeQuiz.feedbackTime=1.8;
   }else{
     if(!wrongIds.includes(q.id))wrongIds.push(q.id);
-    if(activeQuiz.mode==='seal')activeQuiz.seal.quizHadWrong=true;
-    activeQuiz.feedbackTime=4;
+    activeQuiz.feedbackTime=3.2;
   }
 }
 
@@ -361,15 +564,24 @@ function updateQuiz(dt){
   if(!activeQuiz)return;
   if(!activeQuiz.answered){
     for(let i=0;i<4;i++)if(pressed[String(i+1)]){answerQuiz(i);break;}
+    if(activeQuiz&&!activeQuiz.answered&&(pressed['w']||pressed['arrowup']||pressed['arrowleft']))activeQuiz.cursor=(activeQuiz.cursor+3)%4;
+    if(activeQuiz&&!activeQuiz.answered&&(pressed['s']||pressed['arrowdown']||pressed['arrowright']))activeQuiz.cursor=(activeQuiz.cursor+1)%4;
+    if(activeQuiz&&!activeQuiz.answered&&pressed[' '])answerQuiz(activeQuiz.cursor);
     return;
   }
   activeQuiz.feedbackTime-=dt;
   if(activeQuiz.feedbackTime>0)return;
-  if(activeQuiz.correct){activeQuiz=null;return;}
-  if(activeQuiz.mode==='seal'){
-    activeQuiz.seal.quizCooldown=10;activeQuiz=null;return;
+  if(activeQuiz.index<activeQuiz.questions.length-1){
+    activeQuiz.index++;
+    activeQuiz.question=activeQuiz.questions[activeQuiz.index];activeQuiz.answered=false;activeQuiz.selected=-1;activeQuiz.cursor=0;activeQuiz.correct=false;activeQuiz.feedbackTime=0;activeQuiz.optionRects=[];
+    return;
   }
-  activeQuiz.question=pickQuiz(activeQuiz.chapter,activeQuiz.question.id);activeQuiz.answered=false;activeQuiz.selected=-1;activeQuiz.correct=false;activeQuiz.feedbackTime=0;activeQuiz.optionRects=[];
+  const completedExam=activeQuiz,onComplete=completedExam.onComplete;
+  activeQuiz=null;paused=false;
+  score+=completedExam.correctCount===5?500:completedExam.correctCount*40;
+  if(completedExam.correctCount===5)setQuote('五題全對，獲得「博聞強識」嘉獎！',2.8);
+  if(onComplete)onComplete(completedExam.correctCount);
+  if(levelClear)transitionTimer=Math.min(transitionTimer,.35);
 }
 
 function handleQuizPointer(x,y){
@@ -388,24 +600,24 @@ function hasNearbyInteraction(){
 }
 
 function updatePlayer(dt){
-  player.anim+=dt;player.hurt=Math.max(0,player.hurt-dt);player.inv=Math.max(0,player.inv-dt);player.dashCd=Math.max(0,player.dashCd-dt);player.skill=Math.max(0,player.skill-dt);
+  player.anim+=dt;player.step=Math.max(0,player.step-dt);player.hurt=Math.max(0,player.hurt-dt);player.inv=Math.max(0,player.inv-dt);player.dashCd=Math.max(0,player.dashCd-dt);player.skill=Math.max(0,player.skill-dt);
   let dx=0,dy=0;
   if(keys['a']||keys['arrowleft'])dx--;
   if(keys['d']||keys['arrowright'])dx++;
   if(keys['w']||keys['arrowup'])dy--;
   if(keys['s']||keys['arrowdown'])dy++;
   if(dx&&dy){dx*=.707;dy*=.707}
-  if(pressed['j']&&hasNearbyInteraction()){
+  if(pressed[' ']&&hasNearbyInteraction()){
     player.interactionLock=true;player.charging=0;player.chargeReady=false;
   }
-  if(released['j']&&player.interactionLock)player.interactionLock=false;
+  if(released[' ']&&player.interactionLock)player.interactionLock=false;
   if(player.attack<=0&&player.hurt<=0){
-    if(!player.interactionLock&&pressed['j'])player.charging=Math.max(player.charging,.01);
-    if(!player.interactionLock&&keys['j']){
+    if(!player.interactionLock&&pressed[' '])player.charging=Math.max(player.charging,.01);
+    if(!player.interactionLock&&keys[' ']){
       player.charging=Math.min(CHARGE_TIME,player.charging+dt);
       if(player.charging>=CHARGE_TIME&&!player.chargeReady){player.chargeReady=true;sfx('collect');setQuote('劍意已滿，放開施展絕招！',1.2);}
     }
-    if(!player.interactionLock&&released['j']&&player.charging>0){
+    if(!player.interactionLock&&released[' ']&&player.charging>0){
       player.attackCharged=player.chargeReady;
       player.attackMax=player.attackCharged?.56:.4;
       player.attack=player.attackMax;player.attackHit=false;player.attackIndex=(player.attackIndex+1)%3;
@@ -413,9 +625,14 @@ function updatePlayer(dt){
       if(player.attackCharged){sfx('skill');setQuote('一劍破浪！',1.2);}
     }
     if(player.charging<=0&&pressed['l']&&player.spirit>=35){
-      player.spirit-=35;player.skill=.6;shake=10;sfx('skill');setQuote('山水清音！',1.2);
-      enemies.forEach(e=>{if(!e.dead&&dist(player,e)<260)damageEnemy(e,28,80)});
-      if(boss&&!boss.dead&&dist(player,boss)<350){boss.hp-=35;boss.hurt=.25;inkBurst(boss.x+80,boss.y+80,24);}
+      player.spirit-=35;player.skill=.6;shake=10;sfx('skill');let repelled=0;
+      for(const e of enemies){
+        const dx=e.x+e.w/2-(player.x+player.w/2),dy=e.y+e.h/2-(player.y+player.h/2);
+        if(e.dead||e.hurt>0||Math.hypot(dx,dy)>=280)continue;
+        damageEnemy(e,22,150,dx>=0?1:-1);e.y=clamp(e.y+(dy>=0?34:-34),350,H-e.h-20);repelled++;
+      }
+      if(boss&&!boss.dead&&dist(player,boss)<350){const dir=boss.x+boss.w/2>=player.x+player.w/2?1:-1;boss.x=clamp(boss.x+dir*85,40,worldLength-boss.w-40);boss.hp-=35;boss.hurt=.32;boss.hitDir=dir;boss.hitStrength=1.45;inkBurst(boss.x+80,boss.y+80,24);burst(boss.x+80,boss.y+80,'#d9f1e8',10);sfx('bossHeavyHit');repelled++;}
+      setQuote(repelled?`山水清音！震退 ${repelled} 隻近身精怪。`:'山水清音蕩開周身濁氣。',1.5);
       for(let i=0;i<32;i++)particle(player.x+30,player.y+40,{color:i%2?'#d9f0da':'#4f887a',vx:rand(-240,240),vy:rand(-220,160),life:rand(.5,1),size:rand(3,10),grav:0});
     }
   }
@@ -428,8 +645,13 @@ function updatePlayer(dt){
       const reach=player.attackCharged?170:110;
       const box={x:player.face>0?player.x+35:player.x-reach+25,y:player.y+8,w:reach,h:78};
       const power=(18+player.attackIndex*3)*(player.attackCharged?2:1);
-      enemies.forEach(e=>{if(!e.dead&&rects(box,e,4))damageEnemy(e,power,player.attackCharged?90:45)});
-      if(boss&&!boss.dead&&rects(box,boss,10)){boss.hp-=(16+player.attackIndex*3)*(player.attackCharged?2:1);boss.hurt=player.attackCharged?.3:.16;shake=player.attackCharged?11:5;inkBurst(box.x+box.w/2,box.y+35,player.attackCharged?18:8);sfx('hit');combo++;comboTimer=2;score+=20*combo;player.spirit=clamp(player.spirit+3,0,100);}
+      dispelWaves(box);
+      enemies.forEach(e=>{if(!e.dead&&(!player.attackCharged||isOnScreen(e))&&rects(box,e,4))damageEnemy(e,power,player.attackCharged?90:45)});
+      if(boss&&!boss.dead&&(!player.attackCharged||isOnScreen(boss))&&rects(box,boss,10)){boss.hp-=(16+player.attackIndex*3)*(player.attackCharged?2:1);boss.hurt=player.attackCharged?.34:.22;boss.hitDir=player.face;boss.hitStrength=player.attackCharged?1.5:1;shake=player.attackCharged?12:6;inkBurst(box.x+box.w/2,box.y+35,player.attackCharged?20:10);burst(box.x+box.w/2,box.y+35,player.attackCharged?'#f3d88a':'#d9f1e8',player.attackCharged?10:5);sfx(player.attackCharged?'bossHeavyHit':'bossHit');combo++;comboTimer=2;score+=20*combo;player.spirit=clamp(player.spirit+3,0,100);}
+      if(player.attackCharged){
+        const qiW=190;
+        projectiles.push({type:'swordQi',x:player.face>0?player.x+58:player.x-qiW+4,y:player.y+8,vx:player.face*840,vy:0,w:qiW,h:70,life:2.2,damage:32,charged:true,hitTargets:new Set(),hitBoss:false});
+      }
     }
     if(player.attack<=0){player.attack=0;player.attackCharged=false;}
   }
@@ -441,14 +663,19 @@ function updatePlayer(dt){
   }
   player.moving=player.dash>0||!!(dx||dy)&&player.hurt<=0;
   player.running=player.dash>0||player.moving&&!!keys['shift'];
+  if(player.moving&&player.dash<=0&&player.step<=0){
+    particle(player.x+30-player.face*12,player.y+92,{color:'#cdbf96',vx:-player.face*rand(18,48),vy:rand(-34,-12),life:rand(.18,.3),size:rand(2,5),grav:45});
+    player.step=player.running?.1:.17;
+  }
   player.x=clamp(player.x,20,worldLength-90);player.y=clamp(player.y,360,585);
   if(comboTimer>0){comboTimer-=dt}else combo=0;
 }
 
 function updateEnemies(dt){
   for(const e of enemies){
-    e.anim+=dt;e.hurt=Math.max(0,e.hurt-dt);e.cool-=dt;
+    const wasHurt=e.hurt>0;e.anim+=dt;e.hurt=Math.max(0,e.hurt-dt);e.cool-=dt;e.stepTimer-=dt;e.moving=false;
     if(e.dead){e.death-=dt;continue;}
+    if(wasHurt){e.attack=Math.max(0,e.attack-dt);continue;}
     const dx=player.x-e.x, dy=player.y-e.y;
     const close=Math.abs(dx)<95&&Math.abs(dy)<55;
     e.face=dx>=0?1:-1;
@@ -457,7 +684,11 @@ function updateEnemies(dt){
       const prev=e.attack;e.attack-=dt;
       if(prev>.2&&e.attack<=.2&&Math.abs(player.x-e.x)<110&&Math.abs(player.y-e.y)<70)damagePlayer(e.damage,e.x);
     }else if(Math.abs(dx)<520&&Math.abs(dx)>70){
-      e.x+=Math.sign(dx)*e.speed*dt;e.y+=Math.sign(dy)*e.speed*.32*dt;
+      e.moving=true;e.x+=Math.sign(dx)*e.speed*dt;e.y+=Math.sign(dy)*e.speed*.32*dt;
+      if(e.stepTimer<=0){
+        const color={mist:'#5d5670',mud:'#9b8460',current:'#76b9ba',shadow:'#3f5a55'}[e.type];
+        particle(e.x+e.w/2-e.face*14,e.y+e.h-4,{color,vx:-e.face*rand(18,55),vy:rand(-38,-10),life:rand(.2,.38),size:rand(3,7),grav:35});e.stepTimer=rand(.14,.25);
+      }
     }
     if(e.type==='mud'&&Math.abs(dx)<400&&Math.abs(dx)>180&&e.cool<=0){
       projectiles.push({type:'mud',x:e.x+30,y:e.y+28,vx:e.face*260,vy:0,w:22,h:22,life:2.2,damage:8});e.cool=1.8;
@@ -468,8 +699,21 @@ function updateEnemies(dt){
 
 function updateProjectiles(dt){
   for(const p of projectiles){
+    if(p.life<=0)continue;
     p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt;
-    if(p.type==='wave'){p.y+=Math.sin(p.life*8)*20*dt;}
+    if(p.type==='swordQi'){
+      const visibleQi=clipToScreen(p);
+      if(!visibleQi){p.life=0;continue;}
+      dispelWaves(visibleQi);
+      const dir=Math.sign(p.vx)||1;
+      for(const e of enemies){if(!e.dead&&isOnScreen(e)&&!p.hitTargets.has(e)&&rects(visibleQi,e,4)){p.hitTargets.add(e);damageEnemy(e,p.damage,p.charged?80:38,dir);}}
+      if(boss&&!boss.dead&&isOnScreen(boss)&&!boss.hurt&&!p.hitBoss&&rects(visibleQi,boss,8)){p.hitBoss=true;boss.hp-=p.damage;boss.hurt=p.charged?.34:.22;boss.hitDir=dir;boss.hitStrength=p.charged?1.5:1;shake=p.charged?12:6;inkBurst(visibleQi.x+visibleQi.w/2,visibleQi.y+visibleQi.h/2,p.charged?20:10);sfx(p.charged?'bossHeavyHit':'bossHit');}
+      continue;
+    }
+    if(p.type==='wave'){
+      p.y+=Math.sin(p.life*8+(p.phase||0))*20*dt;
+      if(Math.random()<dt*24)particle(p.x+rand(0,p.w),p.y+rand(2,p.h*.7),{color:Math.random()<.65?'#e8f7ed':'#76b8ad',vx:rand(-80,20),vy:rand(-125,-38),life:rand(.24,.55),size:rand(2,7),grav:115});
+    }
     if(rects(p,player,2)){damagePlayer(p.damage,p.x);p.life=0;}
   }
   projectiles=projectiles.filter(p=>p.life>0&&p.x>-200&&p.x<worldLength+200);
@@ -477,11 +721,11 @@ function updateProjectiles(dt){
 
 function updateObjects(dt){
   for(const o of objects){
-    if(o.type==='seal'){
-      o.quizCooldown=Math.max(0,(o.quizCooldown||0)-dt);
-      if(!o.got&&o.quizCooldown<=0&&Math.abs(player.x-o.x)<70&&Math.abs(player.y-o.y)<90&&!activeQuiz){openSealQuiz(o);break;}
+    if(o.type==='healing'&&!o.got&&player.hp<player.maxHp&&Math.abs(player.x-o.x)<70&&Math.abs(player.y-o.y)<130){
+      const recovered=Math.min(o.amount,player.maxHp-player.hp);o.got=true;player.hp+=recovered;score+=80;sfx('collect');setMessage(`服下「${o.idiom}」七彩靈丹，心神恢復 ${Math.ceil(recovered)}`,2.1);
+      for(let i=0;i<28;i++)particle(o.x,o.y,{color:RAINBOW_ELIXIR_COLORS[i%RAINBOW_ELIXIR_COLORS.length],vx:rand(-180,180),vy:rand(-220,60),life:rand(.45,1),size:rand(3,8),grav:120});
     }
-    if((o.type==='fish'||o.type==='stone')&&!o.got&&pressed['j']&&Math.abs(player.x-o.x)<110&&Math.abs(player.y-o.y)<100){
+    if((o.type==='fish'||o.type==='stone')&&!o.got&&pressed[' ']&&Math.abs(player.x-o.x)<110&&Math.abs(player.y-o.y)<100){
       o.seen=true;o.got=true;score+=120;player.spirit=clamp(player.spirit+12,0,100);sfx('collect');setMessage(o.type==='fish'?'你看見清晰游魚：直視無礙':'水底細石清楚可見：千丈見底',2.2);burst(o.x,o.y,o.type==='fish'?'#dbf6e8':'#dac9a6',14);
       if(o.type==='fish'&&!fishingTriggered&&objects.filter(a=>a.type==='fish'&&a.got).length>=3){
         fishingTriggered=true;startFishingGame();
@@ -489,22 +733,22 @@ function updateObjects(dt){
     }
     if(o.type==='gate'&&!levelClear&&Math.abs(player.x-o.x)<100){
       const alive=enemies.some(e=>!e.dead);
-      const needObserve=level===2&&objects.filter(a=>(a.type==='fish'||a.type==='stone')&&a.got).length<5;
+      const needObserve=level===2&&objects.filter(a=>a.type==='fish'&&a.got).length<3;
       if(alive)setMessage('前方仍有濁氣阻路',1);
-      else if(needObserve)setMessage('再觀察幾處游魚與細石（按 J）',1);
-      else if(pressed['j']||player.x>o.x+15){
-        openGateQuiz(()=>{levelClear=true;transitionTimer=2.2;sfx('clear');setQuote(level===0?'天山終於共色。':'江水澄明，直視無礙。',2.2);});
+      else if(needObserve)setMessage('再觀察三尾游魚（按空白鍵）',1);
+      else if(pressed[' ']||player.x>o.x+15){
+        openChapterExam(()=>{levelClear=true;transitionTimer=2.2;sfx('clear');setQuote(level===0?'天山終於共色。':'江水澄明，直視無礙。',2.2);});
       }
     }
   }
 }
 
 function startFishingGame(){
-  const colors=['#e0bd62','#72b79b','#d78d68','#9b8ac1','#d8d0a1'];
-  fishing={active:true,hookX:W*.72,hookY:260,anchorX:W-92,anchorY:132,success:0,attempts:0,flash:0,lastHit:null,carry:null,time:0,
+  const colors=['#b59655','#668e78','#a76f55','#6d7884','#a8a078'];
+  fishing={active:true,hookX:W*.672,hookY:285,anchorX:W*.672,anchorY:H*.267,success:0,attempts:0,flash:0,lastHit:null,carry:null,time:0,
     fish:Array.from({length:8},(_,i)=>({x:rand(80,W-80),baseY:rand(250,H-95),y:0,vx:rand(38,82)*(i%2?1:-1),size:rand(.72,1.22),phase:rand(0,Math.PI*2),color:colors[i%colors.length],hooked:false}))};
   for(const f of fishing.fish)f.y=f.baseY;
-  setQuote('水下游魚自在，移動魚鉤，按 J 收竿。',2.8);
+  setQuote('水下游魚自在，移動魚鉤，按空白鍵收竿。',2.8);
 }
 
 function updateFishing(dt){
@@ -527,7 +771,7 @@ function updateFishing(dt){
   const mx=(keys['d']||keys['arrowright']?1:0)-(keys['a']||keys['arrowleft']?1:0);
   const my=(keys['s']||keys['arrowdown']?1:0)-(keys['w']||keys['arrowup']?1:0);
   fishing.hookX=clamp(fishing.hookX+mx*280*dt,70,W-70);fishing.hookY=clamp(fishing.hookY+my*240*dt,205,H-62);
-  if(pressed['j']){
+  if(pressed[' ']){
     fishing.attempts++;
     let nearest=null,best=58;
     for(const f of fishing.fish){const d=Math.hypot(f.x-fishing.hookX,f.y-fishing.hookY);if(d<best){best=d;nearest=f;}}
@@ -536,55 +780,175 @@ function updateFishing(dt){
   }
 }
 
+function startSoundGame(){
+  const sources=[
+    {kind:'spring',x:155,y:505,r:105,label:'泉水激石',verse:'泠泠作響'},
+    {kind:'bird',x:1050,y:92,r:100,label:'好鳥相鳴',verse:'嚶嚶成韻'},
+    {kind:'cicada',x:825,y:365,r:112,label:'蟬轉不窮',verse:'千轉不窮'},
+    {kind:'monkey',x:1155,y:310,r:105,label:'猿叫無絕',verse:'百叫無絕'}
+  ];
+  soundGame={active:true,sources,order:shuffled([0,1,2,3]),index:0,target:null,found:new Set(),clueDelay:3.5,replayCooldown:0,feedback:'',feedbackTimer:0,correctPending:false,lastChoice:null,time:0,soundLoading:false,soundReady:false,replayRect:{x:W/2-120,y:646,w:240,h:48}};
+  soundGame.target=sources[soundGame.order[0]];
+}
+
+async function playSoundClue(){
+  const g=soundGame;if(!g||!g.active||!g.target||g.soundLoading)return;
+  const target=g.target,pan=clamp(target.x/(W/2)-1,-.9,.9);g.soundLoading=true;g.soundReady=false;g.feedback='';
+  const played=await playNatureSound(target.kind,pan);
+  if(soundGame!==g||!g.active||g.target!==target)return;
+  g.soundLoading=false;g.soundReady=played;g.replayCooldown=played?4.2:0;
+  if(!played)g.feedback='聲音未能播放，請點擊「播放聲音」或按空白鍵。';
+}
+
+function advanceSoundRound(){
+  const g=soundGame;g.index++;
+  if(g.index>=g.order.length){
+    g.active=false;stopNatureSound();sfx('clear');
+    openChapterExam(()=>{levelClear=true;transitionTimer=2.4;sfx('clear');setQuote('蟬吟猿嘯，皆入山水清音。',2.8);});
+    return;
+  }
+  g.target=g.sources[g.order[g.index]];g.clueDelay=.7;g.feedback='';g.lastChoice=null;g.soundLoading=false;g.soundReady=false;
+}
+
+function updateSoundGame(dt){
+  const g=soundGame;if(!g||!g.active)return;g.time+=dt;g.replayCooldown=Math.max(0,g.replayCooldown-dt);
+  if(g.feedbackTimer>0){
+    g.feedbackTimer-=dt;
+    if(g.feedbackTimer<=0){if(g.correctPending)advanceSoundRound();else{g.feedback='';g.lastChoice=null;playSoundClue();}}
+    return;
+  }
+  if(g.soundLoading)return;
+  if(g.clueDelay>0){g.clueDelay-=dt;if(g.clueDelay<=0)playSoundClue();return;}
+  if(pressed[' ']&&g.replayCooldown<=0)playSoundClue();
+}
+
+function handleSoundPointer(x,y){
+  const g=soundGame;if(!g||!g.active||g.feedbackTimer>0)return;
+  if(g.clueDelay>0)return;
+  if(pointInRect(x,y,g.replayRect)){if(g.replayCooldown<=0)playSoundClue();return;}
+  if(!g.soundReady)return;
+  for(const source of g.sources){
+    if(Math.hypot(x-source.x,y-source.y)>source.r)continue;
+    g.lastChoice=source;
+    if(source===g.target){g.found.add(source.kind);g.feedback=`尋得「${source.label}」——${source.verse}`;g.feedbackTimer=1.55;g.correctPending=true;score+=280;sfx('collect');burst(source.x,source.y,'#f2dc8c',28);}
+    else{g.feedback='此處並非方才聲源，凝神再聽。';g.feedbackTimer=.95;g.correctPending=false;score=Math.max(0,score-30);sfx('hurt');}
+    return;
+  }
+}
+
 function updateBoat(dt){
   const m=mini;
-  m.distance+=250*dt;
-  m.spawn-=dt;m.tokenSpawn-=dt;
-  if((pressed['w']||pressed['arrowup'])&&m.lane>0)m.lane--;
-  if((pressed['s']||pressed['arrowdown'])&&m.lane<2)m.lane++;
-  const lanes=[410,495,580];player.y=lerp(player.y,lanes[m.lane],dt*9);player.x=260+m.distance;
-  updateObjects(dt);
-  cameraX=m.distance;
-  if(activeQuiz)return;
-  if(m.spawn<=0){
-    m.spawn=rand(1.9,3.1);
-    m.rocks.push({x:m.distance+1180,y:rand(365,402),w:rand(36,78),h:rand(24,58),seed:Math.floor(rand(1,9999)),tone:Math.floor(rand(0,3))});
+  m.time+=dt;m.inv=Math.max(0,m.inv-dt);m.rockSpawn-=dt;
+  const steer=(keys['d']||keys['arrowright']?1:0)-(keys['a']||keys['arrowleft']?1:0);
+  m.steer=lerp(m.steer,steer,dt*7);
+  if(m.arriving){
+    m.distance+=125*dt;m.arrivalTimer-=dt;m.steer=lerp(m.steer,0,dt*5);m.boatX=lerp(m.boatX,W/2+135,dt*1.8);
+    player.x=m.distance+m.boatX;player.y=520;cameraX=m.distance;
+    if(m.arrivalTimer<=0){m.arriving=false;levelClear=true;transitionTimer=.3;sfx('clear');setQuote('扁舟泊岸，抵達桐廬渡口。',2.2);}
+    return;
   }
-  if(m.tokenSpawn<=0){m.tokenSpawn=rand(1.1,1.8);m.tokens.push({x:m.distance+1050,lane:Math.floor(Math.random()*3),got:false,text:['從流','飄蕩','任意東西'][Math.floor(Math.random()*3)]});}
-  for(const t of m.tokens){
-    if(!t.got&&Math.abs((t.x-m.distance)-260)<60&&t.lane===m.lane){t.got=true;score+=100;player.spirit=clamp(player.spirit+10,0,100);sfx('collect');setMessage('蒐集意象：'+t.text,1.1);}
+  const accelerating=keys['w']||keys['arrowup'],slowing=keys['s']||keys['arrowdown'];
+  if(pressed['w']||pressed['arrowup'])m.speed+=22;
+  if(pressed['s']||pressed['arrowdown'])m.speed-=22;
+  const throttle=(accelerating?1:0)-(slowing?1:0);
+  m.speed=clamp(m.speed+throttle*110*dt,m.minSpeed,m.maxSpeed);
+  if(!throttle)m.speed=lerp(m.speed,245,dt*.35);
+  const speed=m.speed;
+  m.distance+=speed*dt;m.boatX=clamp(m.boatX+steer*470*dt,285,995);
+  player.x=m.distance+m.boatX;player.y=520;cameraX=m.distance;
+  if(m.rockSpawn<=0&&m.distance<m.courseLength-250){
+    m.rockSpawn=rand(.72,1.12);
+    m.rocks.push({z:1,lane:rand(-.78,.78),shape:Math.floor(rand(0,3)),hit:false});
   }
-  m.rocks=m.rocks.filter(r=>r.x-m.distance>-200);m.tokens=m.tokens.filter(t=>t.x-m.distance>-200&&!t.got);
-  if(m.distance>3400&&!m.done){m.done=true;openGateQuiz(()=>{levelClear=true;transitionTimer=2;sfx('clear');setQuote('從流飄蕩，任意東西。',2.4);});}
+  for(const rock of m.rocks){
+    rock.z-=dt*(.24+speed/3100);
+    const p=1-rock.z,curve=p*p,rx=W/2+rock.lane*(W*.1+curve*W*.43),ry=290+curve*390,size=18+curve*92;
+    if(!rock.hit&&m.inv<=0&&ry>525&&ry<650&&Math.abs(rx-m.boatX)<size*.58+52){
+      rock.hit=true;m.inv=1.3;m.hull--;player.hp=m.hull/m.maxHull*player.maxHp;score=Math.max(0,score-100);shake=18;flash=.16;sfx('hurt');setMessage(`撞上礁岩！船身耐久 ${m.hull}／${m.maxHull}`,1.5);burst(cameraX+m.boatX,590,'#edf4dd',28);
+      if(m.hull<=0){gameState='gameover';sfx('gameOver');return;}
+    }
+  }
+  for(const bonus of m.bonuses){
+    if(!bonus.spawned&&m.distance>=bonus.at)bonus.spawned=true;
+    if(!bonus.spawned||bonus.got||bonus.z<=-.12)continue;
+    bonus.z-=dt*(.22+speed/3300);const g=boatRockGeometry(bonus);
+    if(g.y>520&&g.y<650&&Math.abs(g.x-m.boatX)<62){
+      bonus.got=true;score+=260;player.spirit=clamp(player.spirit+12,0,100);collected.push(bonus.idiom);sfx('collect');setMessage(`拾得「${bonus.idiom}」加分靈丹，悟境 +260`,2);
+      for(let i=0;i<24;i++)particle(cameraX+g.x,g.y,{color:RAINBOW_ELIXIR_COLORS[i%RAINBOW_ELIXIR_COLORS.length],vx:rand(-160,160),vy:rand(-210,45),life:rand(.4,.9),size:rand(3,8),grav:110});
+    }
+  }
+  for(const mark of m.milestones){
+    if(!mark.got&&m.distance>=mark.at){mark.got=true;collected.push(mark.text);score+=180;player.spirit=clamp(player.spirit+18,0,100);sfx('collect');setQuote('順流領會：'+mark.text,2.2);}
+  }
+  m.rocks=m.rocks.filter(rock=>rock.z>-.12);
+  if(m.distance>m.courseLength&&!m.done){m.done=true;openChapterExam(()=>{m.arriving=true;m.arrivalTimer=3;sfx('clear');setQuote('答卷既成，順流駛向桐廬渡口。',2.4);});}
 }
 
 function updateBoss(dt){
-  const b=boss;if(!b||b.dead)return;
+  const b=boss;if(!b)return;
+  if(b.dead){
+    b.defeatTimer=Math.max(0,b.defeatTimer-dt);
+    if(b.defeatTimer<=0&&!b.celebrationShown){
+      b.celebrationShown=true;
+      openVictoryCelebration();
+    }
+    return;
+  }
   b.time+=dt;b.cool-=dt;b.attack=Math.max(0,b.attack-dt);b.hurt=Math.max(0,b.hurt-dt);
   b.phase=b.hp<b.maxHp*.45?2:1;
-  const dx=player.x-b.x,dy=player.y-b.y;
-  if(b.cool<=0){
-    b.attack=.9;b.cool=b.phase===1?1.8:1.15;sfx('boss');
-    const count=b.phase===1?2:4;
-    for(let i=0;i<count;i++)projectiles.push({type:'wave',x:b.x+20,y:420+i*45,vx:-rand(260,390),vy:0,w:92,h:38,life:5,damage:b.phase===1?12:16});
-    if(b.phase===2&&Math.random()<.55){
-      enemies.push(enemy('current',b.x-280,rand(430,570)));
+  let dx=player.x+player.w/2-(b.x+b.w/2),dy=player.y+player.h/2-(b.y+b.h/2);
+  b.face=dx>=0?1:-1;
+  if(b.leap>0){
+    const previous=b.leap;b.leap=Math.max(0,b.leap-dt);const t=1-b.leap/b.leapDuration,ease=t*t*(3-2*t);
+    b.x=lerp(b.leapStartX,b.leapTargetX,ease);b.y=lerp(b.leapStartY,b.leapTargetY,ease)-Math.sin(t*Math.PI)*235;
+    if(previous>0&&b.leap===0){
+      b.x=b.leapTargetX;b.y=b.leapTargetY;b.cool=1.35;shake=22;sfx('bossHeavyHit');burst(b.x+b.w/2,b.y+b.h-12,'#dff5eb',34);inkBurst(b.x+b.w/2,b.y+b.h-10,24);
+      dx=player.x+player.w/2-(b.x+b.w/2);dy=player.y+player.h/2-(b.y+b.h/2);
+      if(bossTouchesPlayer(b))damagePlayer(b.phase===2?22:17,b.x+b.w/2);
     }
+  }else{
+    if(b.cool<=0){
+      const useLeap=Math.random()<(b.phase===2?.5:.28);sfx('boss');
+      if(useLeap){
+        b.attack=0;b.leap=b.leapDuration;b.leapStartX=b.x;b.leapStartY=b.y;b.leapTargetX=clamp(player.x-b.w*.45,80,worldLength-b.w-40);b.leapTargetY=clamp(player.y-75,370,480);b.cool=2.6;setMessage('水獸騰躍撲擊——快離開落點！',1.35);
+      }else{
+        b.attack=.9;b.cool=b.phase===1?1.8:1.15;
+        const count=b.phase===1?2:3,waveW=b.phase===1?118:148,waveH=b.phase===1?52:66;
+        for(let i=0;i<count;i++){
+          const waveY=clamp(player.y+(i-(count-1)/2)*48,390,565);
+          projectiles.push({type:'wave',x:b.face>0?b.x+b.w-18:b.x-waveW+18,y:waveY,vx:b.face*rand(260,390),vy:0,w:waveW,h:waveH,life:5,damage:b.phase===1?8:10,phase:rand(0,Math.PI*2)});
+        }
+        if(b.phase===2&&Math.random()<.55)enemies.push(enemy(Math.random()<.4?'shadow':'current',clamp(b.x-b.face*280,80,worldLength-180),rand(430,570)));
+      }
+    }
+    if(b.attack>.3&&bossTouchesPlayer(b))damagePlayer(15,b.x+b.w/2);
   }
-  if(Math.abs(dx)<155&&Math.abs(dy)<100&&b.attack>.3)damagePlayer(15,b.x);
-  if(b.hp<=0){b.hp=0;b.dead=true;score+=2000;for(let i=0;i<80;i++)particle(b.x+100,b.y+100,{color:i%3===0?'#e6d287':'#7fb4aa',vx:rand(-300,300),vy:rand(-350,120),life:rand(.8,1.8),size:rand(4,14),grav:80});openGateQuiz(()=>{levelClear=true;transitionTimer=4;sfx('clear');setQuote('急湍止息，猛浪歸於江海。',3.2);});}
+  if(b.hp<=0){
+    b.hp=0;b.dead=true;b.defeatTimer=5;score+=2000;
+    for(let i=0;i<80;i++)particle(b.x+100,b.y+100,{color:i%3===0?'#e6d287':'#7fb4aa',vx:rand(-300,300),vy:rand(-350,120),life:rand(.8,1.8),size:rand(4,14),grav:80});
+    for(const e of enemies){if(!e.dead)burst(e.x+e.w/2,e.y+e.h/2,'#d9ead8',18);}
+    enemies=[];
+    projectiles=projectiles.filter(p=>p.type==='swordQi');
+    setMessage('奔浪水獸倒地，餘下濁氣一併消散！',4.8);
+    setQuote('急湍止息，猛浪歸於江海。',4.8);
+  }
 }
 
 function updateParticles(dt){for(const p of particles){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=p.grav*dt;p.life-=dt;}for(let i=particles.length-1;i>=0;i--)if(particles[i].life<=0)particles.splice(i,1);}
 
 function update(dt){
   pressedCache();
+  if(gameState==='map'){
+    if(mapTransition){mapTransition.time+=dt;if(mapTransition.time>=mapTransition.duration||(mapTransition.time>.65&&(pressed['enter']||pressed['mouse']||pressed[' '])))enterStageFromMap();}
+    return;
+  }
   if(activeQuiz){updateQuiz(dt);return;}
   if(pressed['p'])paused=!paused;
   if(paused||gameState!=='play'){updateParticles(dt);return;}
   if(messageTimer>0)messageTimer-=dt;if(quoteTimer>0)quoteTimer-=dt;if(chapterTimer>0)chapterTimer-=dt;if(flash>0)flash-=dt;if(shake>0)shake*=.86;
   if(fishing&&fishing.active){updateFishing(dt);updateParticles(dt);return;}
-  if(level===1)updateBoat(dt);else{updatePlayer(dt);updateEnemies(dt);updateProjectiles(dt);updateObjects(dt);if(!activeQuiz&&level===3)updateBoss(dt);if(!activeQuiz)cameraX=lerp(cameraX,clamp(player.x-180,0,worldLength-W),dt*8);}
+  if(soundGame&&soundGame.active){updateSoundGame(dt);updateParticles(dt);return;}
+  if(level===1)updateBoat(dt);else if(level!==3){const bossDefeatHold=level===4&&boss?.dead;if(!bossDefeatHold){updatePlayer(dt);updateEnemies(dt);updateProjectiles(dt);updateObjects(dt);}if(!activeQuiz&&level===4)updateBoss(dt);if(!activeQuiz&&!bossDefeatHold)cameraX=lerp(cameraX,clamp(player.x-180,0,worldLength-W),dt*8);}
   if(activeQuiz)return;
   updateParticles(dt);
   if(levelClear){transitionTimer-=dt;if(transitionTimer<=0){startLevel(level+1);}}
@@ -615,7 +979,7 @@ function drawMountains(offset,baseY,scale,color,alpha=1){
 function drawBamboo(x,y,s=1){ctx.save();ctx.translate(x,y);ctx.strokeStyle='#234f3c';ctx.lineWidth=7*s;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(10*s,-140*s);ctx.stroke();for(let i=0;i<5;i++){const yy=-30*i*s-20;ctx.strokeStyle='#416f52';ctx.lineWidth=3*s;ctx.beginPath();ctx.moveTo(5*s,yy);ctx.quadraticCurveTo(40*s,yy-25*s,55*s,yy-8*s);ctx.stroke();ctx.fillStyle='#537f5c';ctx.beginPath();ctx.ellipse(48*s,yy-16*s,20*s,7*s,-.4,0,Math.PI*2);ctx.fill()}ctx.restore();}
 function drawBackground(){
   const ox=cameraX;
-  const bgIndex=gameState==='ending'?2:clamp(level,0,3);
+  const bgIndex=gameState==='ending'?2:clamp(level,0,4);
   const bg=chapterBackgrounds[bgIndex];
   if(bg.complete&&bg.naturalWidth){
     const scale=Math.max(W/bg.naturalWidth,H/bg.naturalHeight)*1.04;
@@ -633,25 +997,19 @@ function drawBackground(){
       }
     }
 
-    if(level===0){
-      ctx.save();ctx.globalAlpha=.11;ctx.fillStyle='#536461';
-      for(let i=0;i<7;i++){ctx.beginPath();ctx.ellipse((i*230-ox*.18)%1700,220+i%3*72,210,58,.12,0,Math.PI*2);ctx.fill()}
-      ctx.restore();
-    }else if(level===1){
+    if(level===1){
       ctx.save();ctx.globalAlpha=.18;ctx.strokeStyle='#fff8dc';ctx.lineWidth=2;
       for(let i=0;i<7;i++){const y=470+i*34;ctx.beginPath();for(let x=-100;x<W+100;x+=150){const xx=x-(ox*.22%150);ctx.moveTo(xx,y);ctx.quadraticCurveTo(xx+55,y-7,xx+110,y)}ctx.stroke()}
       ctx.restore();
     }else if(level===2){
       ctx.save();ctx.globalAlpha=.06;ctx.fillStyle='#bff5e5';ctx.fillRect(0,390,W,H-390);ctx.restore();
-    }else if(level===3){
+    }else if(level===4){
       ctx.save();ctx.globalAlpha=.12;ctx.fillStyle='#183f42';ctx.fillRect(0,0,W,H);
-      ctx.globalAlpha=.18;ctx.fillStyle='#eef3df';
-      for(let i=0;i<6;i++){ctx.beginPath();ctx.ellipse((i*260-ox*.35)%1750,400+i%2*70,220,24,-.08,0,Math.PI*2);ctx.fill()}
       ctx.restore();
     }
     return;
   }
-  const sky=ctx.createLinearGradient(0,0,0,H);sky.addColorStop(0,level===3?'#7899a0':'#b9d9cf');sky.addColorStop(.62,level===3?'#9ab8b4':'#e8dfbf');sky.addColorStop(1,'#6c9c88');ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
+  const sky=ctx.createLinearGradient(0,0,0,H);sky.addColorStop(0,level===4?'#7899a0':'#b9d9cf');sky.addColorStop(.62,level===4?'#9ab8b4':'#e8dfbf');sky.addColorStop(1,'#6c9c88');ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
   // sun and haze
   ctx.save();ctx.globalAlpha=.35;ctx.fillStyle='#fff6cc';ctx.beginPath();ctx.arc(1030-ox*.03,120,58,0,Math.PI*2);ctx.fill();ctx.restore();
   drawMountains(-ox*.08,350,.2,'#89a99c',.58);drawMountains(-ox*.15,430,.32,'#648b7b',.58);drawMountains(-ox*.28,505,.55,'#3d6b59',.72);
@@ -661,8 +1019,6 @@ function drawBackground(){
   // shore and trees
   ctx.fillStyle='#365e46';ctx.beginPath();ctx.moveTo(0,380);for(let x=0;x<W+80;x+=80){ctx.lineTo(x,390+Math.sin((x+ox*.5)*.02)*18)}ctx.lineTo(W,450);ctx.lineTo(0,450);ctx.fill();
   for(let i=-1;i<12;i++){const x=i*145-(ox*.65%145);drawBamboo(x,410,randSeed(i+Math.floor(ox/145))*.25+.65)}
-  if(level===0){ctx.save();ctx.globalAlpha=.12;for(let i=0;i<8;i++){ctx.fillStyle='#536461';ctx.beginPath();ctx.ellipse((i*210-ox*.45)%1500,200+i%3*70,190,75,.2,0,Math.PI*2);ctx.fill()}ctx.restore();}
-  if(level===3){ctx.save();ctx.globalAlpha=.22;ctx.fillStyle='#dce7e0';for(let i=0;i<7;i++){ctx.beginPath();ctx.ellipse((i*220-ox*.9)%1600,420+i%2*58,210,32,0,0,Math.PI*2);ctx.fill()}ctx.restore();}
 }
 function randSeed(n){const x=Math.sin(n*999)*43758.5453;return x-Math.floor(x)}
 
@@ -690,8 +1046,9 @@ function drawSwordQi(p,sy){
   ctx.restore();
 }
 function drawPlayer(){
-  const p=player;const sx=p.x-cameraX,sy=p.y;const bob=Math.sin(p.anim*9)*2;
-  drawShadow(sx+30,sy+94,38);
+  const p=player;const sx=p.x-cameraX,sy=p.y,pace=p.running?14:9;
+  const stride=p.moving?Math.sin(p.anim*pace):0,bob=p.moving?-Math.abs(stride)*(p.running?4:2):Math.sin(p.anim*3)*.5;
+  drawShadow(sx+30,sy+94,38-Math.abs(stride)*3);
   if(heroSprite.complete&&heroSprite.naturalWidth){
     let sprite=heroSprite,frameW=heroSprite.naturalWidth/4,frameH=heroSprite.naturalHeight/2;
     let frame=0,sourceY=0,drawH=150,drawY=sy+105-drawH;
@@ -707,7 +1064,7 @@ function drawPlayer(){
       sourceY=(running?1:0)*frameH;
     }
     const drawW=drawH*frameW/frameH;
-    ctx.save();ctx.translate(sx+30,0);ctx.scale(p.face,1);
+    ctx.save();ctx.translate(sx+30,bob);ctx.scale(p.face,1);
     if(p.inv>0&&Math.floor(p.inv*18)%2===0)ctx.globalAlpha=.35;
     if(p.hurt>0)ctx.filter='brightness(1.45) sepia(.5) saturate(1.8)';
     ctx.drawImage(sprite,frame*frameW,sourceY,frameW,frameH,-drawW/2,drawY,drawW,drawH);
@@ -735,7 +1092,7 @@ function drawPlayer(){
   // head
   ctx.fillStyle='#d8b08b';ctx.beginPath();ctx.arc(0,-30,19,0,Math.PI*2);ctx.fill();ctx.fillStyle='#202c29';ctx.beginPath();ctx.arc(-2,-37,20,Math.PI,Math.PI*2);ctx.fill();ctx.fillRect(-20,-37,40,7);
   // legs
-  ctx.strokeStyle='#223b35';ctx.lineWidth=9;ctx.beginPath();ctx.moveTo(-10,48);ctx.lineTo(-13,72);ctx.moveTo(10,48);ctx.lineTo(16,72);ctx.stroke();
+  ctx.strokeStyle='#223b35';ctx.lineWidth=9;ctx.beginPath();ctx.moveTo(-10,48);ctx.lineTo(-13+stride*11,72);ctx.moveTo(10,48);ctx.lineTo(16-stride*11,72);ctx.stroke();
   // arm + brush
   const atk=p.attack>0;ctx.strokeStyle='#d8b08b';ctx.lineWidth=8;ctx.beginPath();ctx.moveTo(14,0);ctx.lineTo(atk?42:27,atk?-14:18);ctx.stroke();ctx.strokeStyle='#2b221b';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(atk?38:25,atk?-12:16);ctx.lineTo(atk?82:55,atk?-28:32);ctx.stroke();ctx.fillStyle='#111';ctx.beginPath();ctx.moveTo(atk?82:55,atk?-28:32);ctx.lineTo(atk?94:67,atk?-32:35);ctx.lineTo(atk?84:57,atk?-20:26);ctx.fill();
   if(atk){ctx.strokeStyle='#ecf0dfaa';ctx.lineWidth=10;ctx.beginPath();ctx.arc(20,-2,72,-.7,.45);ctx.stroke();}
@@ -745,13 +1102,17 @@ function drawPlayer(){
 
 function drawEnemy(e){
   const x=e.x-cameraX,y=e.y;drawShadow(x+e.w/2,y+e.h,40);
-  const bob=Math.sin(e.anim*(e.type==='mud'?3:4)+e.x*.012)*(e.type==='mist'?4:2);
-  const lunge=e.attack>0?7:0;
-  ctx.save();ctx.translate(x+e.w/2+e.face*lunge,y+e.h/2+bob);if(e.dead)ctx.globalAlpha=clamp(e.death/.55,0,1);if(e.hurt>0)ctx.filter='brightness(1.8) saturate(.7)';
+  const step=Math.sin(e.anim*(e.type==='mud'?7:9)+e.x*.025),idle=Math.sin(e.anim*(e.type==='mist'?4:2.8)+e.x*.012);
+  const bob=e.moving?Math.abs(step)*(e.type==='mud'?3:5):idle*(e.type==='mist'?4:1.8);
+  const attackArc=e.attack>0?Math.sin(clamp(1-e.attack/.42,0,1)*Math.PI):0;
+  const hurtArc=e.hurt>0?Math.sin(clamp(e.hurt/.3,0,1)*Math.PI*.5):0;
+  const lunge=e.face*attackArc*11,recoil=(e.recoilDir||0)*hurtArc*10*e.hitStrength;
+  ctx.save();ctx.translate(x+e.w/2+lunge+recoil,y+e.h/2+bob);ctx.rotate((e.moving?-e.face*step*.035:idle*.012)+(e.recoilDir||0)*hurtArc*.09);if(e.dead)ctx.globalAlpha=clamp(e.death/.65,0,1);if(e.hurt>0)ctx.filter='brightness(2.35) saturate(.35) contrast(1.15)';
   if(enemyAtlasSprite.complete&&enemyAtlasSprite.naturalWidth){
     const frame=ENEMY_ATLAS_FRAMES[e.type],sw=enemyAtlasSprite.naturalWidth/2,sh=enemyAtlasSprite.naturalHeight/2;
-    const pulse=1+Math.sin(e.anim*3)*.012+(e.attack>0?.045:0);
-    ctx.scale(-e.face*pulse,pulse);
+    const stride=e.moving?step*.028:idle*.01,pulse=1+attackArc*.05;
+    ctx.scale(-e.face*(pulse+stride+hurtArc*.07),pulse-stride-hurtArc*.09);
+    if(e.moving&&e.type!=='mud'){ctx.save();ctx.globalAlpha*=.14;ctx.drawImage(enemyAtlasSprite,frame.col*sw,frame.row*sh,sw,sh,-frame.w/2+9,-frame.h/2,frame.w,frame.h);ctx.restore();}
     ctx.drawImage(enemyAtlasSprite,frame.col*sw,frame.row*sh,sw,sh,-frame.w/2,-frame.h/2,frame.w,frame.h);
   }else{
     ctx.scale(e.face,1);
@@ -765,76 +1126,193 @@ function drawEnemy(e){
       ctx.fillStyle='#40384d';ctx.beginPath();ctx.moveTo(-25,40);ctx.lineTo(-34,-20);ctx.quadraticCurveTo(0,-55,32,-18);ctx.lineTo(26,42);ctx.fill();ctx.fillStyle='#e1d7bf';ctx.fillRect(7,-16,5,5);ctx.fillRect(20,-16,5,5);
     }
   }
-  if(e.attack>0){ctx.strokeStyle='#d39a83aa';ctx.lineWidth=7;ctx.beginPath();ctx.arc(10,0,58,-.8,.5);ctx.stroke();}
+  if(e.attack>0){ctx.strokeStyle='#d39a83aa';ctx.lineWidth=7;ctx.globalAlpha*=.45+.55*attackArc;ctx.beginPath();ctx.arc(10,0,58,-.8,.5);ctx.stroke();}
   ctx.restore();
   // hp
+  if(!e.dead)drawText(e.name,x+e.w/2,y-29,15,'center','#f5ebcf','sans');
   if(!e.dead&&e.hp<e.maxHp){ctx.fillStyle='#0008';ctx.fillRect(x,y-12,e.w,7);ctx.fillStyle='#b64d3d';ctx.fillRect(x,y-12,e.w*(e.hp/e.maxHp),7)}
 }
 
+function drawQuizScrollGate(x,y,near){
+  const pulse=1+Math.sin(performance.now()*.004)*.035;ctx.save();ctx.translate(x,y);ctx.scale(pulse,pulse);ctx.shadowColor='#f0b84e';ctx.shadowBlur=near?30:18;
+  const paper=ctx.createLinearGradient(-68,-42,68,42);paper.addColorStop(0,'#fff0a8');paper.addColorStop(.5,'#f8d979');paper.addColorStop(1,'#e9b955');ctx.fillStyle=paper;ctx.strokeStyle='#9e3f35';ctx.lineWidth=5;ctx.beginPath();ctx.roundRect(-72,-42,144,84,12);ctx.fill();ctx.stroke();
+  ctx.fillStyle='#a43f35';ctx.strokeStyle='#f4c965';ctx.lineWidth=3;for(const side of [-1,1]){ctx.beginPath();ctx.roundRect(side*72-8,-52,16,104,7);ctx.fill();ctx.stroke();ctx.beginPath();ctx.arc(side*72,side<0?-56:56,9,0,Math.PI*2);ctx.fill();ctx.stroke();}
+  ctx.globalAlpha=.9;ctx.fillStyle='#4f8172';ctx.beginPath();ctx.moveTo(-64,30);ctx.lineTo(-36,0);ctx.lineTo(-17,19);ctx.lineTo(8,-15);ctx.lineTo(33,14);ctx.lineTo(52,-4);ctx.lineTo(66,30);ctx.closePath();ctx.fill();ctx.fillStyle='#7ca18c';ctx.beginPath();ctx.moveTo(-60,30);ctx.lineTo(-31,14);ctx.lineTo(-10,27);ctx.lineTo(18,8);ctx.lineTo(42,30);ctx.closePath();ctx.fill();ctx.globalAlpha=1;
+  ctx.fillStyle='#c95d42';ctx.beginPath();ctx.arc(43,-20,9,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fff1b2';ctx.strokeStyle='#9e3f35';ctx.lineWidth=3;ctx.beginPath();ctx.arc(0,0,20,0,Math.PI*2);ctx.fill();ctx.stroke();drawText('空',0,-2,22,'center','#6a3129','serif',false);ctx.restore();
+  roundRect(x-72,y+58,144,32,9,near?'#a53f35ee':'#17483fe8','#f2cd70');drawText(near?'按空白鍵展卷':'展卷答題',x,y+74,16,'center','#fff5d0','sans',false);
+}
+
+function drawObservationFish(x,y,near){
+  const t=performance.now()*.003,bob=Math.sin(t+x*.01)*4,swim=Math.sin(t*1.8+x)*5;ctx.save();ctx.translate(x,y+bob);ctx.globalAlpha=.78;
+  ctx.strokeStyle='#173f3b';ctx.lineWidth=3;ctx.fillStyle='#77a497aa';ctx.beginPath();ctx.ellipse(0,0,34,15,0,0,Math.PI*2);ctx.fill();ctx.stroke();
+  ctx.fillStyle='#5d887dcc';ctx.beginPath();ctx.moveTo(-28,0);ctx.lineTo(-52,-18-swim);ctx.lineTo(-47,18-swim);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.fillStyle='#d8d0aa99';ctx.beginPath();ctx.moveTo(-5,-12);ctx.lineTo(-17,-27);ctx.lineTo(13,-14);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='#dce6cfaa';ctx.lineWidth=2;for(let i=-1;i<2;i++){ctx.beginPath();ctx.arc(i*10+2,3,9,.25,1.5);ctx.stroke();}
+  ctx.fillStyle='#efe8c9';ctx.beginPath();ctx.arc(18,-5,5,0,Math.PI*2);ctx.fill();ctx.fillStyle='#17312e';ctx.beginPath();ctx.arc(19,-5,2.3,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#d9d1ad99';ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(25,3);ctx.quadraticCurveTo(42,8,49,0);ctx.moveTo(25,5);ctx.quadraticCurveTo(42,16,52,12);ctx.stroke();ctx.restore();
+  roundRect(x-70,y-54+bob,140,28,9,near?'#a5533ee8':'#173f39d9','#e1c77d');drawText('觀察・直視無礙',x,y-40+bob,15,'center','#fff1c8','serif',false);
+  if(near)drawText('空白鍵 觀察',x,y+40+bob,15,'center','#fff6d9','sans');
+}
+
+function drawObservationStone(x,y,near,seed=0){
+  ctx.save();ctx.translate(Math.round(x),Math.round(y));ctx.scale(Math.sin(seed*.017)>=0?1:-1,1);ctx.globalAlpha=.82;
+  ctx.fillStyle='#17312e55';ctx.beginPath();ctx.ellipse(0,19,58,15,0,0,Math.PI*2);ctx.fill();
+  const stone=ctx.createLinearGradient(-28,-34,34,24);stone.addColorStop(0,'#c7bea0');stone.addColorStop(.45,'#8f896f');stone.addColorStop(1,'#4f5c50');
+  ctx.fillStyle=stone;ctx.strokeStyle='#35473f';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(-49,13);ctx.lineTo(-44,-7);ctx.lineTo(-30,-14);ctx.lineTo(-23,-29);ctx.lineTo(-7,-36);ctx.lineTo(6,-26);ctx.lineTo(21,-32);ctx.lineTo(34,-19);ctx.lineTo(48,-9);ctx.lineTo(43,10);ctx.lineTo(28,19);ctx.lineTo(10,15);ctx.lineTo(-4,25);ctx.lineTo(-26,20);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.fillStyle='#b8af91';ctx.beginPath();ctx.moveTo(-30,-14);ctx.lineTo(-23,-29);ctx.lineTo(-7,-36);ctx.lineTo(6,-26);ctx.lineTo(-2,-7);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#737966';ctx.beginPath();ctx.moveTo(-2,-7);ctx.lineTo(6,-26);ctx.lineTo(21,-32);ctx.lineTo(34,-19);ctx.lineTo(22,0);ctx.lineTo(8,13);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#59675a';ctx.beginPath();ctx.moveTo(22,0);ctx.lineTo(48,-9);ctx.lineTo(43,10);ctx.lineTo(28,19);ctx.lineTo(10,15);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='#34483fbb';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-8,-35);ctx.lineTo(-10,-20);ctx.lineTo(-2,-7);ctx.lineTo(-9,8);ctx.moveTo(21,-31);ctx.lineTo(17,-17);ctx.lineTo(23,-6);ctx.moveTo(-30,-13);ctx.lineTo(-18,-5);ctx.lineTo(-22,9);ctx.stroke();
+  ctx.fillStyle='#8e9477';ctx.beginPath();ctx.moveTo(-62,17);ctx.lineTo(-56,2);ctx.lineTo(-43,5);ctx.lineTo(-39,20);ctx.closePath();ctx.fill();ctx.stroke();ctx.beginPath();ctx.moveTo(44,17);ctx.lineTo(53,3);ctx.lineTo(65,11);ctx.lineTo(61,23);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.strokeStyle='#e9efd080';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-42,-2);ctx.quadraticCurveTo(-10,8,33,-2);ctx.moveTo(-32,10);ctx.quadraticCurveTo(2,20,43,8);ctx.stroke();
+  ctx.fillStyle='#617c61aa';for(const [px,py,r] of [[-17,-18,3],[28,-12,2.5],[5,4,2]]){ctx.beginPath();ctx.arc(px,py,r,0,Math.PI*2);ctx.fill();}
+  ctx.restore();
+  if(near)drawText('空白鍵 觀察細石',x,y-55,15,'center','#fff5d8','sans');
+}
+
 function drawObjects(){
-  for(const o of objects){const x=o.x-cameraX,y=o.y;if(o.type==='seal'&&!o.got){ctx.save();ctx.translate(x,y);ctx.rotate(Math.sin(performance.now()*.002)*.06);ctx.fillStyle='#e8d38b';ctx.strokeStyle='#7d5c2c';ctx.lineWidth=4;ctx.beginPath();ctx.roundRect(-34,-45,68,90,10);ctx.fill();ctx.stroke();drawText(o.text,0,0,18,'center','#58351f','serif',false);ctx.restore();if(o.quizCooldown>0)drawText(`${Math.ceil(o.quizCooldown)} 秒後可再試`,x,y-65,15,'center','#f7efd3','sans');}
-    if((o.type==='fish'||o.type==='stone')&&!o.got){ctx.save();ctx.globalAlpha=.46;ctx.translate(x,y);if(o.type==='fish'){ctx.fillStyle='#d4f0e5';ctx.beginPath();ctx.ellipse(0,0,23,10,0,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.moveTo(-18,0);ctx.lineTo(-34,-12);ctx.lineTo(-34,12);ctx.fill()}else{ctx.fillStyle='#d7c9a8';ctx.beginPath();ctx.ellipse(0,0,24,13,0,0,Math.PI*2);ctx.fill()}ctx.restore();if(Math.abs(player.x-o.x)<120)drawText('J 觀察',x,y-35,16,'center','#fff','sans');}
-    if(o.type==='gate'){ctx.strokeStyle='#d8c687';ctx.lineWidth=7;ctx.strokeRect(x-25,y-45,60,120);drawText('J',x+5,y+10,28,'center','#f3e7b1','sans');}
+  for(const o of objects){const x=o.x-cameraX,y=o.y;
+    if(o.type==='healing'&&!o.got){
+      const now=performance.now(),bob=Math.sin(now*.003+o.x)*4;ctx.save();ctx.translate(x,y+bob);ctx.rotate(now*.00045+o.x);
+      ctx.lineWidth=7;ctx.lineCap='round';for(let i=0;i<RAINBOW_ELIXIR_COLORS.length;i++){const a=i*Math.PI*2/RAINBOW_ELIXIR_COLORS.length;ctx.strokeStyle=RAINBOW_ELIXIR_COLORS[i];ctx.shadowColor=RAINBOW_ELIXIR_COLORS[i];ctx.shadowBlur=18;ctx.beginPath();ctx.arc(0,0,29,a+.05,a+Math.PI*2/RAINBOW_ELIXIR_COLORS.length-.05);ctx.stroke();}
+      ctx.rotate(-(now*.00045+o.x));const pearl=ctx.createRadialGradient(-8,-9,3,0,0,25);pearl.addColorStop(0,'#fffbe8');pearl.addColorStop(.45,'#f4d98c');pearl.addColorStop(1,'#a94e45');ctx.fillStyle=pearl;ctx.strokeStyle='#f7e7a8';ctx.lineWidth=3;ctx.shadowColor='#ffeaa0';ctx.shadowBlur=22;ctx.beginPath();ctx.arc(0,0,24,0,Math.PI*2);ctx.fill();ctx.stroke();drawText('丹',0,2,18,'center','#5a2f29','serif',false);
+      ctx.restore();
+      roundRect(x-66,y-72+bob,132,30,9,'#173c35df','#e6d184');drawText(o.idiom,x,y-57+bob,17,'center','#fff1bd','serif',false);
+      if(Math.abs(player.x-o.x)<125)drawText(player.hp<player.maxHp?'靠近服丹・恢復心神':'心神充盈・靈丹留存',x,y+55,14,'center','#f6edc9','sans');
+    }
+    if(o.type==='fish'&&!o.got)drawObservationFish(x,y,Math.abs(player.x-o.x)<120);
+    if(o.type==='stone'&&!o.got)drawObservationStone(x,y,Math.abs(player.x-o.x)<120,o.x);
+    if(o.type==='gate')drawQuizScrollGate(x,y,Math.abs(player.x-o.x)<130);
   }
 }
 
-function drawProjectiles(){for(const p of projectiles){const x=p.x-cameraX,y=p.y;if(p.type==='mud'){ctx.fillStyle='#6d5a40';ctx.beginPath();ctx.arc(x,y,12,0,Math.PI*2);ctx.fill()}else{ctx.save();ctx.globalAlpha=.78;ctx.fillStyle='#b9e3dc';ctx.beginPath();ctx.ellipse(x,y,p.w/2,p.h/2,0,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#ecfbf8';ctx.lineWidth=4;ctx.stroke();ctx.restore();}}}
+function drawProjectiles(){
+  for(const p of projectiles){
+    const x=p.x-cameraX,y=p.y;
+    if(p.type==='mud'){
+      ctx.fillStyle='#6d5a40';ctx.beginPath();ctx.arc(x,y,12,0,Math.PI*2);ctx.fill();
+    }else if(p.type==='swordQi'){
+      const dir=Math.sign(p.vx)||1,w=p.w,h=p.h,flutter=Math.sin(p.life*18)*5;
+      ctx.save();ctx.translate(x+(dir>0?0:w),y+h/2);ctx.scale(dir,1);ctx.globalAlpha=clamp(p.life/.22,0,1);
+      ctx.shadowColor=p.charged?'#f3d374':'#bdeee0';ctx.shadowBlur=p.charged?24:14;ctx.strokeStyle=p.charged?'#f5dc83':'#dff8ed';ctx.lineWidth=p.charged?14:9;ctx.beginPath();ctx.moveTo(0,h*.36);ctx.quadraticCurveTo(w*.48,-h*.66+flutter,w,0);ctx.quadraticCurveTo(w*.46,-h*.12,0,h*.36);ctx.stroke();
+      ctx.shadowBlur=0;ctx.strokeStyle=p.charged?'#356f61':'#669f91';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(4,h*.43);ctx.quadraticCurveTo(w*.5,-h*.42+flutter,w*.94,4);ctx.stroke();ctx.restore();
+    }else if(p.type==='wave'){
+      const w=p.w,h=p.h,roll=Math.sin(p.life*8+(p.phase||0))*5,dir=Math.sign(p.vx)||-1;
+      ctx.save();ctx.translate(x+(dir>0?0:w),y);ctx.scale(dir,1);ctx.globalAlpha=.94;ctx.lineJoin='round';ctx.lineCap='round';
+      const wash=ctx.createLinearGradient(0,0,w,h);wash.addColorStop(0,'#d8f2e5dd');wash.addColorStop(.38,'#75aaa4dd');wash.addColorStop(1,'#315f62cc');
+      ctx.fillStyle=wash;ctx.strokeStyle='#eaf8ed';ctx.lineWidth=4;
+      ctx.beginPath();ctx.moveTo(0,h*.82);ctx.bezierCurveTo(w*.2,h*.72,w*.3,h*.3,w*.47,h*.28);ctx.bezierCurveTo(w*.57,h*.27,w*.62,h*.48,w*.53,h*.58);ctx.bezierCurveTo(w*.46,h*.66,w*.39,h*.48,w*.48+roll,h*.1);ctx.bezierCurveTo(w*.64,-h*.05,w*.86,h*.17,w,h*.66);ctx.bezierCurveTo(w*.88,h*.92,w*.72,h*.75,w*.55,h*.96);ctx.bezierCurveTo(w*.32,h*.82,w*.14,h,0,h*.82);ctx.closePath();ctx.fill();
+      ctx.beginPath();ctx.moveTo(0,h*.82);ctx.bezierCurveTo(w*.2,h*.72,w*.3,h*.3,w*.47,h*.28);ctx.bezierCurveTo(w*.57,h*.27,w*.62,h*.48,w*.53,h*.58);ctx.bezierCurveTo(w*.46,h*.66,w*.39,h*.48,w*.48+roll,h*.1);ctx.bezierCurveTo(w*.64,-h*.05,w*.86,h*.17,w,h*.66);ctx.stroke();
+      ctx.globalAlpha=.7;ctx.fillStyle='#d9f2e9';ctx.beginPath();ctx.moveTo(w*.05,h*.8);ctx.bezierCurveTo(w*.28,h*.61,w*.43,h*.67,w*.61,h*.82);ctx.bezierCurveTo(w*.73,h*.9,w*.87,h*.78,w,h*.62);ctx.bezierCurveTo(w*.84,h*.86,w*.68,h*.8,w*.55,h*.94);ctx.bezierCurveTo(w*.34,h*.78,w*.16,h*.96,w*.05,h*.8);ctx.closePath();ctx.fill();
+      ctx.globalAlpha=.92;ctx.strokeStyle='#f4fbef';ctx.lineWidth=3;
+      for(let i=0;i<3;i++){const cx=w*(.55+i*.13),cy=h*(.29+i*.08);ctx.beginPath();ctx.arc(cx,cy,10+i*2,Math.PI*.82,Math.PI*1.86);ctx.stroke();}
+      ctx.globalAlpha=.58;ctx.strokeStyle='#9bd0c5';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(w*.08,h*.9);ctx.bezierCurveTo(w*.3,h*.72,w*.5,h*.9,w*.72,h*.74);ctx.bezierCurveTo(w*.85,h*.64,w*.92,h*.8,w,h*.72);ctx.stroke();
+      ctx.fillStyle='#f1faee';ctx.globalAlpha=.9;for(let i=0;i<5;i++){const px=w*(.48+i*.1),py=h*(.08+(i%2)*.13);ctx.beginPath();ctx.arc(px,py,2.5+i%2,0,Math.PI*2);ctx.fill();}
+      ctx.restore();
+    }
+  }
+}
+
+function boatRockGeometry(rock){
+  const p=clamp(1-rock.z,0,1.12),curve=p*p;
+  return {x:W/2+rock.lane*(W*.1+curve*W*.43),y:290+curve*390,size:18+curve*92};
+}
+
+function drawBoatRock(rock){
+  const g=boatRockGeometry(rock),s=g.size;
+  ctx.save();ctx.translate(g.x,g.y);ctx.globalAlpha=clamp((1.08-rock.z)*3,0,1);
+  if(wuxiaReefAtlas.complete&&wuxiaReefAtlas.naturalWidth){
+    const sw=wuxiaReefAtlas.naturalWidth/3,sh=wuxiaReefAtlas.naturalHeight,dw=s*1.9,dh=s*1.48;
+    ctx.drawImage(wuxiaReefAtlas,sw*(rock.shape%3),0,sw,sh,-dw/2,-dh*.78,dw,dh);
+  }else{
+    const stone=ctx.createLinearGradient(-s,-s,s,s);stone.addColorStop(0,'#66776a');stone.addColorStop(1,'#172d29');ctx.fillStyle=stone;
+    ctx.beginPath();ctx.moveTo(-s*.62,s*.2);ctx.lineTo(-s*.12,-s*.56);ctx.lineTo(s*.58,-s*.08);ctx.lineTo(s*.7,s*.28);ctx.closePath();ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawBoatBonus(bonus){
+  const g=boatRockGeometry(bonus),s=clamp(g.size*.42,10,38);ctx.save();ctx.translate(g.x,g.y);ctx.globalAlpha=clamp((1.08-bonus.z)*3,0,1);
+  ctx.lineWidth=Math.max(3,s*.22);for(let i=0;i<RAINBOW_ELIXIR_COLORS.length;i++){const a=i*Math.PI*2/RAINBOW_ELIXIR_COLORS.length;ctx.strokeStyle=RAINBOW_ELIXIR_COLORS[i];ctx.beginPath();ctx.arc(0,0,s,a+.05,a+Math.PI*2/RAINBOW_ELIXIR_COLORS.length-.05);ctx.stroke();}
+  const pearl=ctx.createRadialGradient(-s*.3,-s*.35,1,0,0,s*.78);pearl.addColorStop(0,'#fff9d9');pearl.addColorStop(.55,'#edce76');pearl.addColorStop(1,'#9c493f');ctx.fillStyle=pearl;ctx.strokeStyle='#fff0aa';ctx.lineWidth=Math.max(2,s*.1);ctx.beginPath();ctx.arc(0,0,s*.75,0,Math.PI*2);ctx.fill();ctx.stroke();drawText('丹',0,1,Math.max(11,s*.52),'center','#5c3129','serif',false);
+  if(bonus.z<.72&&g.y<555){const w=112,h=27;roundRect(-w/2,-s-38,w,h,8,'#17443de5','#e8c96e');drawText(bonus.idiom,0,-s-24,14,'center','#fff0bf','serif',false);}ctx.restore();
+}
+
+function drawBoatDestination(m){
+  const approach=clamp((m.distance-(m.courseLength-1100))/1100,0,1);if(approach<=0)return;
+  const x=Math.round(W-180),y=188;ctx.save();ctx.globalAlpha=approach;ctx.translate(x,y);
+  ctx.shadowColor='#17251dcc';ctx.shadowBlur=14;ctx.shadowOffsetY=5;roundRect(-116,-34,232,68,12,'#ead9ac','#5b4128');
+  ctx.shadowColor='transparent';ctx.shadowBlur=0;ctx.shadowOffsetY=0;ctx.strokeStyle='#8e4938';ctx.lineWidth=3;ctx.strokeRect(-104,-24,208,48);drawText('桐廬渡口',0,1,28,'center','#29483e','serif',false);ctx.restore();
+}
+
+function drawRearBoat(m){
+  const x=m.boatX,y=570+Math.sin(m.time*7)*2;
+  ctx.save();ctx.translate(x+(m.steer||0)*10,y);ctx.rotate((m.steer||0)*.065);if(m.inv>0&&Math.floor(m.inv*14)%2===0)ctx.globalAlpha=.42;
+  ctx.globalAlpha*=.42;ctx.strokeStyle='#f0f3dc';ctx.lineWidth=7;ctx.lineCap='round';
+  for(const side of [-1,1]){ctx.beginPath();ctx.moveTo(side*36,42);ctx.quadraticCurveTo(side*72,70,side*112,98);ctx.stroke();ctx.beginPath();ctx.moveTo(side*48,40);ctx.quadraticCurveTo(side*92,54,side*146,70);ctx.stroke();}
+  ctx.globalAlpha=m.inv>0&&Math.floor(m.inv*14)%2===0?.42:1;
+  if(wuxiaSkiffRearSprite.complete&&wuxiaSkiffRearSprite.naturalWidth)ctx.drawImage(wuxiaSkiffRearSprite,-105,-280,210,315);
+  else{ctx.fillStyle='#6e3d29';ctx.beginPath();ctx.moveTo(0,-170);ctx.lineTo(92,72);ctx.quadraticCurveTo(0,108,-92,72);ctx.closePath();ctx.fill();}
+  if(heroBoatRearSprite.complete&&heroBoatRearSprite.naturalWidth)ctx.drawImage(heroBoatRearSprite,-19,-252,38,57);
+  ctx.restore();
+}
 
 function drawBoatMode(){
-  const m=mini;drawBackground();drawObjects();
-  // lane guide
-  ctx.save();ctx.globalAlpha=.12;ctx.strokeStyle='#fff';ctx.setLineDash([20,24]);for(const y of [410,495,580]){ctx.beginPath();ctx.moveTo(0,y+20);ctx.lineTo(W,y+20);ctx.stroke()}ctx.restore();
-  for(const r of m.rocks){
-    const x=r.x-m.distance,baseY=r.y;
-    const palettes=[['#55584f','#8d8b72'],['#665f50','#a79a78'],['#465b59','#77908a']];
-    const colors=palettes[r.tone]||palettes[0];
-    ctx.save();ctx.translate(x,baseY);ctx.globalAlpha=.72;
-    ctx.fillStyle=colors[0];ctx.strokeStyle='#303b36';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(-r.w/2,0);
-    for(let i=0;i<=6;i++){
-      const px=-r.w/2+r.w*i/6;
-      const edge=(i===0||i===6) ? .12 : .32+randSeed(r.seed+i)*.68;
-      ctx.lineTo(px,-r.h*edge);
-    }
-    ctx.lineTo(r.w/2,0);ctx.closePath();ctx.fill();ctx.stroke();
-    ctx.strokeStyle=colors[1];ctx.lineWidth=2;ctx.globalAlpha=.5;ctx.beginPath();ctx.moveTo(-r.w*.28,-r.h*.24);ctx.lineTo(-r.w*.06,-r.h*.58);ctx.lineTo(r.w*.18,-r.h*.34);ctx.stroke();
-    ctx.restore();
+  const m=mini;
+  if(boatCourseBackground.complete&&boatCourseBackground.naturalWidth){
+    const scale=Math.max(W/boatCourseBackground.naturalWidth,H/boatCourseBackground.naturalHeight),dw=boatCourseBackground.naturalWidth*scale,dh=boatCourseBackground.naturalHeight*scale;
+    ctx.drawImage(boatCourseBackground,(W-dw)/2,(H-dh)/2,dw,dh);
+  }else drawBackground();
+  const ferryBlend=clamp((m.distance-(m.courseLength-1450))/1450,0,1);
+  if(ferryBlend>0&&tongluFerryBackground.complete&&tongluFerryBackground.naturalWidth){
+    const scale=Math.max(W/tongluFerryBackground.naturalWidth,H/tongluFerryBackground.naturalHeight),dw=tongluFerryBackground.naturalWidth*scale,dh=tongluFerryBackground.naturalHeight*scale;
+    ctx.save();ctx.globalAlpha=ferryBlend;ctx.drawImage(tongluFerryBackground,(W-dw)/2,(H-dh)/2,dw,dh);ctx.restore();
   }
-  for(const t of m.tokens){const x=t.x-m.distance,y=[410,495,580][t.lane];ctx.fillStyle='#f2d777';ctx.beginPath();ctx.arc(x,y,22,0,Math.PI*2);ctx.fill();drawText(t.text,x,y,14,'center','#583d22','serif',false)}
-  // boat
-  const x=260,y=player.y;drawShadow(x,y+68,118);
-  if(ancientBoatSprite.complete&&ancientBoatSprite.naturalWidth){
-    const boatW=270,boatH=boatW*ancientBoatSprite.naturalHeight/ancientBoatSprite.naturalWidth;
-    ctx.drawImage(ancientBoatSprite,x-boatW/2,y-37,boatW,boatH);
-  }else{
-    ctx.fillStyle='#6c4529';ctx.beginPath();ctx.moveTo(x-70,y+32);ctx.quadraticCurveTo(x,y+90,x+86,y+25);ctx.lineTo(x+70,y+55);ctx.lineTo(x-60,y+60);ctx.closePath();ctx.fill();
-  }
-  // hero enjoying the breeze at the bow
-  if(heroBoatSprite.complete&&heroBoatSprite.naturalWidth){
-    const breeze=Math.sin(performance.now()*.002)*1.6;
-    ctx.save();ctx.globalAlpha=.32;ctx.strokeStyle='#eff8e4';ctx.lineWidth=2;ctx.setLineDash([34,22]);
-    for(let i=0;i<3;i++){ctx.beginPath();ctx.moveTo(x-82,y-82+i*24);ctx.quadraticCurveTo(x-6,y-96+i*24,x+96,y-76+i*22);ctx.stroke()}
-    ctx.restore();
-    const heroH=150,heroW=heroH*heroBoatSprite.naturalWidth/heroBoatSprite.naturalHeight;
-    ctx.drawImage(heroBoatSprite,x+62-heroW/2,y+29-heroH*.93+breeze,heroW,heroH);
-  }else{
-    ctx.fillStyle='#e9e1c7';ctx.fillRect(x-10,y-25,28,54);ctx.fillStyle='#d8b08b';ctx.beginPath();ctx.arc(x+3,y-34,13,0,Math.PI*2);ctx.fill();ctx.fillStyle='#222';ctx.fillRect(x-11,y-44,28,8);
-  }
+  const water=ctx.createLinearGradient(0,260,0,H);water.addColorStop(0,'#315e5610');water.addColorStop(1,'#123c3a4f');ctx.fillStyle=water;ctx.fillRect(0,270,W,H-270);
+  drawBoatDestination(m);
+  ctx.save();ctx.globalAlpha=.32;ctx.strokeStyle='#f3edd0';ctx.lineWidth=2;
+  for(let i=0;i<9;i++){const p=((m.distance/680+i/9)%1),y=292+p*p*370,center=W/2+(m.boatX-W/2)*p*.82,half=28+p*235;ctx.beginPath();ctx.moveTo(center-half,y);ctx.quadraticCurveTo(center,y+7,center+half,y);ctx.stroke();}
+  ctx.restore();
+  [...m.rocks,...m.bonuses.filter(b=>b.spawned&&!b.got&&b.z>-.12)].sort((a,b)=>b.z-a.z).forEach(o=>o.idiom?drawBoatBonus(o):drawBoatRock(o));
+  drawRearBoat(m);
   drawHUD();
-  drawText('順應水流，按 W／S 或 ↑／↓ 切換航道',W/2,665,20,'center','#fff','sans');
+  roundRect(W/2-250,28,500,54,14,'#f3e7c9dc','#6b5637');
+  ctx.fillStyle='#3b5148';ctx.fillRect(W/2-220,58,440,8);ctx.fillStyle='#c99442';ctx.fillRect(W/2-220,58,440*clamp(m.distance/m.courseLength,0,1),8);
+  const speedRate=clamp((m.speed-m.minSpeed)/(m.maxSpeed-m.minSpeed),0,1),speedLabel=speedRate>.7?'快':speedRate<.35?'慢':'中';
+  drawText(m.arriving?'靠岸中……':`水程 ${Math.floor(clamp(m.distance/m.courseLength,0,1)*100)}%　船速：${speedLabel}`,W/2,46,18,'center','#30483f','sans',false);
+  roundRect(28,130,210,52,12,'#102a26bf','#d8c99677');drawText(`船身 ${'◆'.repeat(m.hull)}${'◇'.repeat(m.maxHull-m.hull)}`,133,156,20,'center','#f2d77b','sans',false);
+  roundRect(W/2-390,626,780,42,12,'#102a26b8','#d8c99655');drawText('A／D、←／→ 左右擺舵　W／↑ 加速・S／↓ 減速',W/2,647,19,'center','#fff7df','sans',false);
 }
 
 function drawBoss(){
-  const b=boss;if(!b)return;const x=b.x-cameraX,y=b.y,bob=Math.sin(b.time*2.4)*3;
-  drawShadow(x+b.w/2,y+b.h-3,128);
-  ctx.save();ctx.translate(x+b.w/2,y+b.h/2+bob);ctx.globalAlpha=b.dead?.25:1;if(b.hurt>0)ctx.filter='brightness(1.8) saturate(.75)';
-  ctx.save();ctx.globalAlpha*=b.phase===2?.46:.28;ctx.strokeStyle=b.phase===2?'#b6eee5':'#6bb2b0';ctx.lineWidth=b.phase===2?10:7;
+  const b=boss;if(!b)return;const x=b.x-cameraX,y=b.y,bob=Math.sin(b.time*2.4)*3,leaping=b.leap>0,leapT=leaping?clamp(1-b.leap/b.leapDuration,0,1):0;
+  if(b.dead&&bossDefeatedSprite.complete&&bossDefeatedSprite.naturalWidth){
+    const groundY=y+b.h-3;
+    drawShadow(x+b.w/2,groundY,150);
+    ctx.save();ctx.translate(x+b.w/2,groundY);ctx.scale(b.face>0?-1:1,1);ctx.globalAlpha=.96;ctx.globalCompositeOperation='screen';ctx.drawImage(bossDefeatedSprite,-180,-214,360,240);ctx.restore();
+    drawText('奔浪水獸・已伏',x+b.w/2,y-22,22,'center','#f4df9b','sans');
+    return;
+  }
+  const attackArc=b.attack>0?Math.sin(clamp(1-b.attack/.9,0,1)*Math.PI):0,hurtArc=b.hurt>0?Math.sin(clamp(b.hurt/.34,0,1)*Math.PI*.5):0;
+  const shadowY=leaping?(b.leapTargetY||410)+b.h-3:y+b.h-3;
+  drawShadow(x+b.w/2,shadowY,leaping?128*(.55+.45*Math.abs(leapT-.5)*2):128);
+  if(leaping){
+    ctx.save();ctx.globalAlpha=.34;ctx.strokeStyle='#bde5d5';ctx.lineWidth=5;
+    for(let i=0;i<4;i++){const trailY=y+40+i*28;ctx.beginPath();ctx.moveTo(x+b.w*.18-i*8,trailY);ctx.bezierCurveTo(x-55-i*18,trailY-22,x-105-i*22,trailY+20,x-154-i*26,trailY-8);ctx.stroke()}
+    ctx.restore();
+  }
+  ctx.save();ctx.translate(x+b.w/2-b.face*attackArc*12+(b.hitDir||1)*hurtArc*17*b.hitStrength,y+b.h/2+bob);ctx.rotate((b.hitDir||1)*hurtArc*.05-b.face*attackArc*.018);ctx.globalAlpha=b.dead?.25:1;if(b.hurt>0)ctx.filter='brightness(2.25) saturate(.45) contrast(1.12)';
+  ctx.save();ctx.globalAlpha*=leaping?.18:b.phase===2?.46:.28;ctx.strokeStyle=b.phase===2?'#b6eee5':'#6bb2b0';ctx.lineWidth=b.phase===2?10:7;
   for(let i=0;i<3;i++){ctx.beginPath();ctx.arc(0,4,92+i*13,b.time*(b.phase===2?1.35:.8)+i,Math.PI*.95+b.time*.25+i);ctx.stroke()}ctx.restore();
-  if(bossRiverSprite.complete&&bossRiverSprite.naturalWidth){
-    const pulse=1+Math.sin(b.time*2.2)*.012+(b.attack>0?.025:0);ctx.scale(pulse,pulse);
-    ctx.drawImage(bossRiverSprite,-140,-111,280,222);
+  const sprite=leaping&&bossLeapSprite.complete&&bossLeapSprite.naturalWidth?bossLeapSprite:bossRiverSprite;
+  if(sprite.complete&&sprite.naturalWidth){
+    const breathe=Math.sin(b.time*2.2)*.012,pulseX=1+breathe+attackArc*.04+hurtArc*.055,pulseY=1-breathe*.45-attackArc*.025-hurtArc*.075;ctx.rotate(leaping?b.face*(.08-.16*leapT):0);ctx.scale((b.face>0?-1:1)*pulseX,pulseY);
+    if(leaping)ctx.drawImage(sprite,-165,-125,330,250);else ctx.drawImage(sprite,-140,-111,280,222);
   }else{
+    ctx.scale(b.face>0?-1:1,1);
     ctx.strokeStyle=b.phase===1?'#437c84':'#315d6a';ctx.lineWidth=30;for(let i=0;i<4;i++){ctx.beginPath();ctx.arc(0,0,55+i*13,b.time*.9+i,.9*Math.PI+b.time*.9+i);ctx.stroke()}ctx.fillStyle='#4b7f84';ctx.beginPath();ctx.ellipse(0,5,78,62,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#d9f2e8';ctx.fillRect(-30,-10,12,12);ctx.fillRect(18,-10,12,12);ctx.fillStyle='#203b3e';ctx.fillRect(-27,-7,5,5);ctx.fillRect(21,-7,5,5);
   }
+  if(hurtArc>0){ctx.filter='none';ctx.strokeStyle=`rgba(235,247,224,${hurtArc*.7})`;ctx.lineWidth=6;ctx.beginPath();ctx.arc(0,0,105+(1-hurtArc)*42,0,Math.PI*2);ctx.stroke();}
   ctx.restore();
 }
 
@@ -842,79 +1320,116 @@ function drawParticles(){for(const p of particles){ctx.save();ctx.globalAlpha=cl
 
 function drawHUD(){
   ctx.save();
+  const spiritCharge=clamp(player.charging/CHARGE_TIME,0,1);
   roundRect(24,22,350,92,18,'#102a268f','#d8c99655');
-  drawText('吳均',48,48,23,'left','#f7edd1');
-  ctx.fillStyle='#241d1b';ctx.fillRect(120,40,220,16);ctx.fillStyle='#a9473d';ctx.fillRect(120,40,220*(player.hp/player.maxHp),16);drawText('心神',84,48,16,'center','#fff','sans');
-  ctx.fillStyle='#172b30';ctx.fillRect(120,72,220,13);ctx.fillStyle='#76b3a2';ctx.fillRect(120,72,220*(player.spirit/player.maxSpirit),13);drawText('靈韻',84,79,16,'center','#fff','sans');
-  roundRect(W-290,22,266,92,18,'#102a268f','#d8c99655');drawText('悟境 '+score,W-48,49,22,'right','#f7edd1','sans');drawText('山水印記 '+collected.length,W-48,82,18,'right','#d8e8d8','sans');
+  ctx.fillStyle='#241d1b';ctx.fillRect(120,40,220,16);ctx.fillStyle='#a9473d';ctx.fillRect(120,40,220*(player.hp/player.maxHp),16);drawText('心神',80,48,16,'center','#fff','sans');
+  ctx.fillStyle='#172b30';ctx.fillRect(120,72,220,13);ctx.fillStyle=player.chargeReady?'#f1d77b':'#76b3a2';ctx.fillRect(120,72,220*spiritCharge,13);drawText('靈韻',80,79,16,'center','#fff','sans');
+  if(spiritCharge>0){ctx.save();ctx.globalAlpha=.4+.35*Math.sin(performance.now()*.012);ctx.strokeStyle=player.chargeReady?'#fff0a8':'#c8eee0';ctx.lineWidth=2;ctx.strokeRect(118,70,224,17);ctx.restore();}
+  roundRect(W-290,22,266,92,18,'#102a268f','#d8c99655');drawText('悟境 '+score,W-48,49,22,'right','#f7edd1','sans');drawText('行旅領悟 '+collected.length,W-48,82,18,'right','#d8e8d8','sans');
   if(combo>1)drawText(`${combo} 連擊`,W/2,84,28,'center','#f5d977','sans');
-  if(level===3&&boss){ctx.fillStyle='#0009';ctx.fillRect(W/2-240,128,480,18);ctx.fillStyle='#486f73';ctx.fillRect(W/2-240,128,480*(boss.hp/boss.maxHp),18);drawText('奔浪水獸',W/2,114,20,'center','#fff');}
+  if(level===4&&boss){ctx.fillStyle='#0009';ctx.fillRect(W/2-240,128,480,18);ctx.fillStyle='#486f73';ctx.fillRect(W/2-240,128,480*(boss.hp/boss.maxHp),18);drawText('奔浪水獸',W/2,114,20,'center','#fff');}
   ctx.restore();
 }
 
 function drawFishingGame(){
   if(!fishing||!fishing.active)return;
   ctx.save();
-  const water=ctx.createLinearGradient(0,125,0,H);water.addColorStop(0,'#4aa4b2');water.addColorStop(.22,'#247487');water.addColorStop(1,'#092f4b');ctx.fillStyle=water;ctx.fillRect(0,0,W,H);
-  // river bank and water surface
-  ctx.fillStyle='#b8a36e';ctx.fillRect(0,0,W,112);ctx.fillStyle='#30483f';
-  for(let i=0;i<11;i++){ctx.beginPath();ctx.moveTo(i*130-30,112);ctx.lineTo(i*130+35,18+i%2*12);ctx.lineTo(i*130+102,112);ctx.fill()}
-  ctx.fillStyle='#5d5842';ctx.fillRect(0,98,W,35);ctx.fillStyle='#d4c594';ctx.fillRect(0,126,W,7);
-  ctx.strokeStyle='#d8f2e9aa';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(0,143);ctx.quadraticCurveTo(W*.25,133,W*.5,144);ctx.quadraticCurveTo(W*.75,154,W,140);ctx.stroke();
-  // submerged stone layers
-  ctx.globalAlpha=.2;ctx.fillStyle='#8da9a1';for(let y=215;y<H;y+=82){for(let x=-30;x<W;x+=150){ctx.beginPath();ctx.roundRect(x+(y%3)*22,y,128,56,18);ctx.fill()}}
+  const waterTop=175;
+  if(fishingWuxiaBackground.complete&&fishingWuxiaBackground.naturalWidth){const scale=Math.max(W/fishingWuxiaBackground.naturalWidth,H/fishingWuxiaBackground.naturalHeight),dw=fishingWuxiaBackground.naturalWidth*scale,dh=fishingWuxiaBackground.naturalHeight*scale;ctx.drawImage(fishingWuxiaBackground,(W-dw)/2,(H-dh)/2,dw,dh)}
+  else{const paper=ctx.createLinearGradient(0,0,0,H);paper.addColorStop(0,'#e7d9b6');paper.addColorStop(1,'#365f5b');ctx.fillStyle=paper;ctx.fillRect(0,0,W,H)}
+  const water=ctx.createLinearGradient(0,waterTop,0,H);water.addColorStop(0,'#6e9e9322');water.addColorStop(.42,'#3f756f44');water.addColorStop(1,'#183f3d88');ctx.fillStyle=water;ctx.fillRect(0,waterTop,W,H-waterTop);
+  ctx.strokeStyle='#edf0d6aa';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(0,waterTop+4);ctx.bezierCurveTo(W*.22,waterTop-6,W*.38,waterTop+12,W*.56,waterTop+2);ctx.bezierCurveTo(W*.72,waterTop-8,W*.86,waterTop+9,W,waterTop);ctx.stroke();
+  ctx.globalAlpha=.1;ctx.fillStyle='#e9e0bd';for(let i=0;i<5;i++){ctx.beginPath();ctx.moveTo(-80,230+i*94);ctx.bezierCurveTo(W*.24,190+i*96,W*.55,285+i*67,W+80,218+i*92);ctx.lineTo(W+80,265+i*92);ctx.bezierCurveTo(W*.55,315+i*67,W*.2,225+i*96,-80,275+i*94);ctx.closePath();ctx.fill()}
+  // 水底石影與水草
+  ctx.globalAlpha=.3;for(let i=0;i<11;i++){const x=i*126-34,y=H-24-randSeed(i+31)*34,w=72+randSeed(i+4)*68,h=20+randSeed(i+17)*24;ctx.fillStyle=i%2?'#283f39':'#6d715b';ctx.beginPath();ctx.moveTo(x-w/2,y);ctx.quadraticCurveTo(x-w*.25,y-h,x,y-h*.82);ctx.quadraticCurveTo(x+w*.35,y-h*1.15,x+w/2,y);ctx.closePath();ctx.fill()}
+  ctx.globalAlpha=.72;for(let i=0;i<18;i++){const x=i*76+12,h=42+randSeed(i+8)*92,sway=Math.sin(fishing.time*1.4+i)*13;ctx.strokeStyle=i%3?'#315e49':'#58735b';ctx.lineWidth=4+i%3;ctx.beginPath();ctx.moveTo(x,H);ctx.quadraticCurveTo(x-16,H-h*.52,x+sway,H-h);ctx.stroke();if(i%2===0){ctx.fillStyle='#668069';ctx.beginPath();ctx.ellipse(x+sway-5,H-h+12,14,5,-.45,0,Math.PI*2);ctx.fill()}}
+  // 氣泡與漂浮墨點
+  ctx.globalAlpha=.55;ctx.strokeStyle='#e4f0dd';ctx.lineWidth=1.7;for(let i=0;i<18;i++){const bx=(i*173+fishing.time*18)%W,by=190+(i*97)%430;ctx.beginPath();ctx.arc(bx,by,2+i%4,0,Math.PI*2);ctx.stroke()}
   ctx.globalAlpha=1;
-  // river plants
-  ctx.strokeStyle='#3e9a74';ctx.lineWidth=8;for(let i=0;i<16;i++){const x=i*86+18,h=randSeed(i+8)*74+28;ctx.beginPath();ctx.moveTo(x,H);ctx.quadraticCurveTo(x-18,H-h*.55,x+4,H-h);ctx.stroke()}
-  // bubbles
-  ctx.strokeStyle='#c8f2ed66';ctx.lineWidth=2;for(let i=0;i<18;i++){const bx=(i*173+fishing.time*18)%W,by=190+(i*97)%470;ctx.beginPath();ctx.arc(bx,by,3+i%4,0,Math.PI*2);ctx.stroke()}
-  // swimming fish
+  // 淡彩游魚
   for(const f of fishing.fish){
-    ctx.save();ctx.translate(f.x,f.y);ctx.scale(f.vx>=0?1:-1,1);const s=f.size;
-    ctx.fillStyle=f.color;ctx.beginPath();ctx.ellipse(0,0,30*s,17*s,0,0,Math.PI*2);ctx.fill();
-    ctx.beginPath();ctx.moveTo(-25*s,0);ctx.lineTo(-45*s,-18*s);ctx.lineTo(-45*s,18*s);ctx.closePath();ctx.fill();
-    ctx.fillStyle='#e8f2dc';ctx.beginPath();ctx.arc(15*s,-5*s,6*s,0,Math.PI*2);ctx.fill();ctx.fillStyle='#193b42';ctx.beginPath();ctx.arc(17*s,-5*s,2.7*s,0,Math.PI*2);ctx.fill();
-    ctx.strokeStyle='#e8f2dc88';ctx.lineWidth=3;ctx.beginPath();ctx.arc(7*s,3*s,13*s,.2,1.3);ctx.stroke();ctx.restore();
+    ctx.save();ctx.translate(f.x,f.y);ctx.scale(f.vx>=0?1:-1,1);const s=f.size,fin=Math.sin(fishing.time*5+f.phase)*4*s;
+    ctx.globalAlpha=.32;ctx.strokeStyle='#d9e1c7';ctx.lineWidth=3*s;ctx.beginPath();ctx.moveTo(-33*s,2*s);ctx.bezierCurveTo(-60*s,-10*s-fin,-69*s,15*s-fin,-91*s,7*s);ctx.stroke();ctx.globalAlpha=.9;
+    ctx.fillStyle=f.color;ctx.strokeStyle='#263e38aa';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(0,0,30*s,16*s,0,0,Math.PI*2);ctx.fill();ctx.stroke();
+    ctx.beginPath();ctx.moveTo(-25*s,0);ctx.lineTo(-45*s,-16*s-fin);ctx.lineTo(-42*s,17*s-fin);ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.fillStyle='#d9d4b5aa';ctx.beginPath();ctx.moveTo(-2*s,-13*s);ctx.lineTo(-13*s,-26*s);ctx.lineTo(12*s,-14*s);ctx.closePath();ctx.fill();
+    ctx.strokeStyle='#efe8cc88';ctx.lineWidth=2;for(let i=-1;i<2;i++){ctx.beginPath();ctx.arc(i*10*s,2*s,8*s,.25,1.55);ctx.stroke()}
+    ctx.fillStyle='#ece5ca';ctx.beginPath();ctx.arc(16*s,-5*s,5*s,0,Math.PI*2);ctx.fill();ctx.fillStyle='#19332e';ctx.beginPath();ctx.arc(17*s,-5*s,2.3*s,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='#e1d7b488';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(24*s,2*s);ctx.quadraticCurveTo(42*s,8*s,49*s,-1*s);ctx.moveTo(24*s,4*s);ctx.quadraticCurveTo(43*s,15*s,53*s,9*s);ctx.stroke();ctx.restore();
   }
-  // fishing line and hook
-  ctx.strokeStyle='#eff6de';ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(fishing.anchorX,fishing.anchorY);ctx.lineTo(fishing.hookX,fishing.hookY);ctx.stroke();
-  ctx.strokeStyle='#d9d4b1';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(fishing.hookX,fishing.hookY-4);ctx.lineTo(fishing.hookX,fishing.hookY+13);ctx.arc(fishing.hookX-8,fishing.hookY+13,8,0,Math.PI);ctx.stroke();
-  roundRect(24,20,530,86,18,'#102a26d9','#d8c99688');drawText('清江垂釣',48,49,28,'left','#f6eccd');drawText('WASD／方向鍵移動魚鉤　J 收竿',48,82,18,'left','#d8e8dc','sans');
-  roundRect(W-280,20,256,86,18,'#102a26d9','#d8c99688');drawText(`漁獲 ${fishing.success}／3`,W-50,49,24,'right','#f5d979','sans');drawText(`收竿 ${fishing.attempts} 次`,W-50,81,17,'right','#d8e8dc','sans');
+  // 從背景畫中竹竿的竿尖接出釣線與魚鉤
+  ctx.strokeStyle='#f0e5c8';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(fishing.anchorX,fishing.anchorY);ctx.lineTo(fishing.hookX,fishing.hookY);ctx.stroke();
+  ctx.strokeStyle='#d5c8a5';ctx.lineWidth=3.5;ctx.beginPath();ctx.moveTo(fishing.hookX,fishing.hookY-4);ctx.lineTo(fishing.hookX,fishing.hookY+13);ctx.arc(fishing.hookX-8,fishing.hookY+13,8,0,Math.PI);ctx.stroke();
+  roundRect(24,20,530,86,16,'#eee3cddd','#6c4b31');drawText('俠影清江・問竿',48,49,28,'left','#29483e','serif',false);drawText('WASD／方向鍵御線　空白鍵提氣收竿',48,82,18,'left','#5d4937','sans',false);
+  roundRect(W-280,20,256,86,16,'#183b35dd','#d3c28d');drawText(`漁獲 ${fishing.success}／3`,W-50,49,24,'right','#f1d583','sans',false);drawText(`收竿 ${fishing.attempts} 次`,W-50,81,17,'right','#e6e3cf','sans',false);
+  ctx.strokeStyle='#d9c99b88';ctx.lineWidth=3;ctx.strokeRect(10,10,W-20,H-20);
   if(fishing.flash>0){ctx.globalAlpha=fishing.flash/.32*.22;ctx.fillStyle=fishing.lastHit?'#d9f4d2':'#cf6253';ctx.fillRect(0,133,W,H-133);}
+  ctx.restore();
+}
+
+function drawSoundGame(){
+  const g=soundGame;if(!g)return;ctx.save();
+  const bg=chapterBackgrounds[3];
+  if(bg.complete&&bg.naturalWidth){const scale=Math.max(W/bg.naturalWidth,H/bg.naturalHeight),dw=bg.naturalWidth*scale,dh=bg.naturalHeight*scale;ctx.drawImage(bg,(W-dw)/2,0,dw,dh)}
+  else{ctx.fillStyle='#b8c6b6';ctx.fillRect(0,0,W,H);drawMountains(0,520,.7,'#365448',.75)}
+  const shade=ctx.createLinearGradient(0,0,0,H);shade.addColorStop(0,'#10251f55');shade.addColorStop(.38,'#10251f08');shade.addColorStop(1,'#08191588');ctx.fillStyle=shade;ctx.fillRect(0,0,W,H);
+  for(const source of g.sources){
+    const found=g.found.has(source.kind),chosen=g.lastChoice===source,pulse=.55+.45*Math.sin(g.time*3+source.x*.01);ctx.save();ctx.translate(source.x,source.y);
+    ctx.strokeStyle=chosen&&!found?'#b95545':found?'#f2d77b':`rgba(239,232,194,${.18+pulse*.16})`;ctx.lineWidth=found?5:2;
+    ctx.beginPath();ctx.arc(0,0,source.r*(found?.46:.58)+pulse*5,0,Math.PI*2);ctx.stroke();
+    if(found){ctx.fillStyle='#17362fc9';ctx.beginPath();ctx.arc(0,0,28,0,Math.PI*2);ctx.fill();drawText('聞',0,1,22,'center','#f3df9b','serif',false)}
+    ctx.restore();
+    if(found){const labelX=clamp(source.x,105,W-105),labelY=source.y+(source.kind==='bird'?68:-68);roundRect(labelX-70,labelY-19,140,38,10,'#17342edb','#d8bf79');drawText(source.label,labelX,labelY,17,'center','#fff0c4','sans',false)}
+  }
+  roundRect(30,18,775,124,18,'#efe5cef0','#6e5436');
+  drawText('寒樹聽音・循聲入谷',56,45,27,'left','#254b40','serif',false);drawText(`尋得 ${g.found.size}／4`,775,45,19,'right','#8d4939','sans',false);
+  drawText('夾岸高山，皆生寒樹；負勢競上，互相軒邈；爭高直指，千百成峰。',56,77,15,'left','#4b5548','serif',false);
+  drawText('泉水激石，泠泠作響。好鳥相鳴，嚶嚶成韻。',56,101,15,'left','#4b5548','serif',false);
+  drawText('蟬則千轉不窮，猿則百叫無絕。建議佩戴耳機辨別左右。',56,124,15,'left','#667064','sans',false);
+  const instruction=g.feedback||(g.soundLoading?'聲音載入中，請稍候……':g.clueDelay>0?'山谷將響起一種聲音，請凝神靜候……':'剛才的聲音來自何處？請點選山林中的聲源。');
+  roundRect(120,566,W-240,64,16,g.feedback?(g.correctPending?'#244c3ee8':'#6a342de8'):'#102a26df','#d8c99688');drawText(instruction,W/2,598,21,'center','#fff4d5','sans',false);
+  const disabled=g.soundLoading||g.replayCooldown>0;roundRect(g.replayRect.x,g.replayRect.y,g.replayRect.w,g.replayRect.h,12,disabled?'#59665dcc':'#8e4b36e8','#ead79c');drawText(g.soundLoading?'聲音載入中…':disabled?'山音迴盪中…':g.soundReady?'再聽一次（空白鍵）':'播放聲音（點擊／空白鍵）',W/2,g.replayRect.y+24,17,'center','#fff5db','sans',false);
   ctx.restore();
 }
 
 function drawQuizPanel(){
   if(!activeQuiz)return;
   const aq=activeQuiz,q=aq.question;
-  ctx.save();ctx.fillStyle='#07130fd9';ctx.fillRect(0,0,W,H);ctx.lineWidth=4;
-  roundRect(110,24,1060,672,24,'#efe4c9','#254b40');
-  drawText(aq.mode==='seal'?'山水印記·理解考驗':'章末閤門·理解考驗',W/2,68,32,'center','#254b40','serif',false);
-  drawText(`【${q.type}】`,150,112,20,'left','#8b4c3e','sans',false);
-  drawWrappedText(q.q,150,138,980,32,25,'#263f37','serif');
+  ctx.save();
+  const bg=chapterBackgrounds[clamp(aq.chapter,0,4)];
+  if(bg.complete&&bg.naturalWidth){const scale=Math.max(W/bg.naturalWidth,H/bg.naturalHeight),dw=bg.naturalWidth*scale,dh=bg.naturalHeight*scale;ctx.drawImage(bg,(W-dw)/2,(H-dh)/2,dw,dh);}
+  ctx.fillStyle='#12231c88';ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#352a20';ctx.fillRect(48,0,24,H);ctx.fillRect(W-72,0,24,H);ctx.fillStyle='#b18a4f';ctx.fillRect(42,42,36,12);ctx.fillRect(W-78,42,36,12);
+  roundRect(98,18,1084,684,26,'#efe4c9f5','#7a5b35');ctx.lineWidth=2;ctx.strokeStyle='#c5a76a';ctx.strokeRect(116,36,1048,648);
+  roundRect(W/2-270,32,540,58,12,'#284b40','#d9c58b');drawText('富春江風情畫小學堂',W/2,61,30,'center','#f6e9bd','serif',false);
+  drawText(`第 ${aq.index+1} 題／共 5 題`,150,112,19,'left','#685743','sans',false);
+  drawText(`本堂答對 ${aq.correctCount} 題`,W-150,112,19,'right','#8b4c3e','sans',false);
+  for(let i=0;i<5;i++){ctx.beginPath();ctx.arc(W/2-52+i*26,111,7,0,Math.PI*2);ctx.fillStyle=i<aq.index?'#567c68':i===aq.index?'#b25a42':'#cbbd9e';ctx.fill();}
+  drawText(`【${q.type}】`,150,151,20,'left','#8b4c3e','sans',false);
+  drawWrappedText(q.q,150,174,980,32,25,'#263f37','serif');
   aq.optionRects=[];
   for(let i=0;i<4;i++){
-    const r={x:150,y:205+i*72,w:980,h:58};aq.optionRects.push(r);
+    const r={x:150,y:238+i*68,w:980,h:54};aq.optionRects.push(r);
     let fill='#f8f1df',stroke='#607b6d';
+    if(!aq.answered&&i===aq.cursor){fill='#f5e2aa';stroke='#a75a3f';}
     if(aq.answered&&i===q.ans){fill='#d7e8d4';stroke='#2f6a4e';}
     if(aq.answered&&!aq.correct&&i===aq.selected){fill='#ead4cc';stroke='#954f43';}
-    ctx.lineWidth=2;roundRect(r.x,r.y,r.w,r.h,12,fill,stroke);
-    drawText(`${i+1}. ${q.opts[i]}`,r.x+22,r.y+r.h/2,21,'left','#263f37','sans',false);
+    ctx.lineWidth=!aq.answered&&i===aq.cursor?4:2;roundRect(r.x,r.y,r.w,r.h,12,fill,stroke);
+    drawText(`${!aq.answered&&i===aq.cursor?'▶ ':''}${i+1}. ${q.opts[i]}`,r.x+22,r.y+r.h/2,21,'left','#263f37','sans',false);
   }
   if(!aq.answered){
-    drawText('按數字鍵 1–4 或點選答案',W/2,653,20,'center','#536a60','sans',false);
+    drawText('W／S 或方向鍵選擇・空白鍵確認，也可按數字鍵 1–4 或點選',W/2,656,19,'center','#536a60','sans',false);
   }else{
     const result=aq.correct?'答對了！':`答錯了，正解：${q.opts[q.ans]}`;
-    drawText(result,150,531,23,'left',aq.correct?'#2f6a4e':'#954f43','sans',false);
-    drawWrappedText(`詳解：${q.exp}`,150,558,980,27,19,'#384d45','sans');
-    if(!aq.correct)drawText(aq.mode==='seal'?'印記保留原地，10 秒後可重試':'詳解結束後自動更換一題',W/2,665,18,'center','#7b5547','sans',false);
+    drawText(result,150,526,22,'left',aq.correct?'#2f6a4e':'#954f43','sans',false);
+    drawWrappedText(`詳解：${q.exp}`,150,551,980,25,18,'#384d45','sans');
+    drawText(aq.index===4?'詳解結束後完成本堂測驗':'詳解結束後進入下一題',W/2,657,17,'center','#7b5547','sans',false);
   }
   ctx.restore();
 }
 
 function drawOverlays(){
-  if(chapterTimer>0){const a=clamp(chapterTimer<.5?chapterTimer*2:chapterTimer>2.7?(3.2-chapterTimer)*2:1,0,1);ctx.save();ctx.globalAlpha=a;ctx.fillStyle='#0d211ecf';ctx.fillRect(0,210,W,180);drawText(chapterTitle,W/2,270,44,'center','#f0e4bd');drawText(chapterSub,W/2,335,22,'center','#d2e2d6','sans');ctx.restore();}
+  if(chapterTimer>0){const a=clamp(chapterTimer<.5?chapterTimer*2:chapterTimer>2.7?(3.2-chapterTimer)*2:1,0,1);ctx.save();ctx.globalAlpha=a;ctx.shadowColor='#102a24';ctx.shadowBlur=10;drawText(chapterTitle,W/2,112,34,'center','#f4e8c4');ctx.restore();}
   if(quoteTimer>0){roundRect(W/2-340,H-128,680,58,14,'#10241fd9','#d8c99666');drawText(currentQuote,W/2,H-99,25,'center','#f7efd3');}
   if(messageTimer>0){roundRect(W/2-260,135,520,44,12,'#0d211ecc');drawText(message,W/2,157,18,'center','#fff','sans');}
   if(fishing&&fishing.active)drawFishingGame();
@@ -925,21 +1440,87 @@ function drawOverlays(){
 
 function drawPlay(){
   if(level===1){drawBoatMode();drawParticles();drawOverlays();return;}
-  ctx.save();if(shake>1)ctx.translate(rand(-shake,shake),rand(-shake,shake));drawBackground();drawObjects();for(const e of enemies)drawEnemy(e);drawProjectiles();if(level===3)drawBoss();drawPlayer();drawParticles();ctx.restore();drawHUD();drawOverlays();
+  if(level===3){drawSoundGame();drawParticles();drawOverlays();return;}
+  ctx.save();if(shake>1)ctx.translate(rand(-shake,shake),rand(-shake,shake));drawBackground();drawObjects();for(const e of enemies)drawEnemy(e);drawProjectiles();if(level===4)drawBoss();drawPlayer();drawParticles();ctx.restore();drawHUD();drawOverlays();
 }
 
 function drawTitle(){
   drawBackground();ctx.fillStyle='#07161399';ctx.fillRect(0,0,W,H);
-  ctx.save();ctx.translate(W/2,145);ctx.fillStyle='#f1e7c8';ctx.strokeStyle='#6b4b2b';ctx.lineWidth=3;ctx.beginPath();ctx.roundRect(-360,-80,720,190,25);ctx.fill();ctx.stroke();drawText('富春江行',0,-16,74,'center','#173e35', 'serif',false);drawText('奇山異水',0,62,38,'center','#8d4939','serif',false);ctx.restore();
-  drawText('《與宋元思書》橫向卷軸動作遊戲',W/2,330,27,'center','#f7efd7');
-  roundRect(W/2-340,390,680,138,20,'#102a2699','#d8c99655');
-  drawText('WASD／方向鍵：移動　 J：斬擊／蓄力／互動',W/2,430,21,'center','#fff','sans');
-  drawText('Shift：奔跑　 L：山水技能　 P：暫停',W/2,471,21,'center','#fff','sans');
-  const pulse=.72+Math.sin(performance.now()*.005)*.28;ctx.globalAlpha=pulse;drawText('按 Enter 或點擊畫面開始',W/2,585,28,'center','#f1d77b','sans');ctx.globalAlpha=1;
-  drawText('單一 HTML 檔，可離線執行',W/2,650,16,'center','#d9e5de','sans');
+  ctx.save();ctx.translate(W/2,125);ctx.fillStyle='#f1e7c8';ctx.strokeStyle='#6b4b2b';ctx.lineWidth=3;ctx.beginPath();ctx.roundRect(-360,-70,720,160,25);ctx.fill();ctx.stroke();drawText('山水問心',0,-8,68,'center','#173e35','serif',false);drawText('富春江行',0,57,34,'center','#8d4939','serif',false);ctx.restore();
+  drawText('《與宋元思書》心境冒險',W/2,270,24,'center','#f7efd7');
+  roundRect(110,300,1060,170,20,'#102a26bd','#d8c99677');
+  drawWrappedText('富春江行旅，一路奇山異水，也引領作者經歷一場心境轉折的奇妙歷程。世俗的紛擾幻化為精怪，唯有擊敗精怪、跨越阻礙，才能獲得心境上的真正自在。',155,327,970,34,21,'#fff3d4','serif');
+  roundRect(W/2-410,478,820,106,16,'#102a2699','#d8c99655');
+  drawText('電腦：WASD／方向鍵移動　空白鍵斬擊、蓄力與互動',W/2,502,16,'center','#fff','sans');
+  drawText('L／「清音」鍵：施展山水清音，震退身旁精怪',W/2,532,17,'center','#f2dc91','sans');
+  drawText('手機／平板：使用畫面方向鍵、攻擊鍵與清音鍵操作',W/2,561,16,'center','#d9e5de','sans');
+  const pulse=.72+Math.sin(performance.now()*.005)*.28;ctx.globalAlpha=pulse;drawText('按 Enter 或點擊畫面開始',W/2,615,27,'center','#f1d77b','sans');ctx.globalAlpha=1;
+  drawText('單一 HTML 檔，可離線執行',W/2,675,15,'center','#d9e5de','sans');
 }
 
-function drawGameOver(){drawPlay();ctx.fillStyle='#0a1210d9';ctx.fillRect(0,0,W,H);drawText('心神耗盡',W/2,270,58,'center','#e9d8b5');drawText('山水之旅尚未結束',W/2,340,24,'center','#fff');drawText('按 R 重新挑戰本章',W/2,450,26,'center','#f1d77b','sans');}
+function drawGameOver(){drawPlay();ctx.fillStyle='#0a1210d9';ctx.fillRect(0,0,W,H);drawText(level===1?'扁舟觸礁':'心神耗盡',W/2,270,58,'center','#e9d8b5');drawText(level===1?'調整航線，再渡富春江':'山水之旅尚未結束',W/2,340,24,'center','#fff');drawText('按 R 或點擊畫面重新挑戰本章',W/2,450,26,'center','#f1d77b','sans');}
+
+function drawWorldMapArtwork(){
+  if(worldMapSprite.complete&&worldMapSprite.naturalWidth){
+    const scale=Math.max(W/worldMapSprite.naturalWidth,H/worldMapSprite.naturalHeight),dw=worldMapSprite.naturalWidth*scale,dh=worldMapSprite.naturalHeight*scale;
+    ctx.drawImage(worldMapSprite,(W-dw)/2,(H-dh)/2,dw,dh);
+  }else drawBackground();
+}
+
+function getMapStagePath(index){
+  const points=MAP_STAGE_SHAPES[index].map(([x,y])=>({x:x*W,y:y*H})),path=new Path2D();
+  path.moveTo(points[0].x,points[0].y);for(let i=1;i<points.length;i++)path.lineTo(points[i].x,points[i].y);
+  path.closePath();return path;
+}
+
+function drawStageMap(){
+  drawWorldMapArtwork();
+  ctx.fillStyle='#07171382';ctx.fillRect(0,0,W,H);
+  const stageIndex=mapTransition?.stage??level,stage=MAP_STAGES[stageIndex],elapsed=mapTransition?.time??0,flash=elapsed<2.4?.18+.82*Math.sin(elapsed*Math.PI/.8)**2:1,activePath=getMapStagePath(stageIndex);
+  for(let i=0;i<MAP_STAGES.length;i++){
+    if(i===stageIndex)continue;
+    const path=getMapStagePath(i),completed=i<stageIndex;
+    if(completed){ctx.save();ctx.clip(path);ctx.filter='brightness(1.27) saturate(1.16)';drawWorldMapArtwork();ctx.globalCompositeOperation='screen';ctx.fillStyle='rgba(225,196,105,.16)';ctx.fillRect(0,0,W,H);ctx.restore();}
+    else{ctx.fillStyle='rgba(5,15,13,.18)';ctx.fill(path);}
+    ctx.strokeStyle=completed?'rgba(239,215,139,.68)':'rgba(205,191,143,.16)';ctx.lineWidth=completed?2.6:1.2;ctx.lineJoin='round';ctx.stroke(path);
+  }
+  ctx.save();ctx.clip(activePath);ctx.globalAlpha=.3+.7*flash;ctx.filter=`brightness(${1.12+flash*.28}) saturate(${1.05+flash*.25})`;drawWorldMapArtwork();ctx.restore();
+  ctx.save();ctx.globalAlpha=.35+.65*flash;ctx.globalCompositeOperation='screen';ctx.fillStyle='rgba(121,207,179,.25)';ctx.shadowColor='#f4dc84';ctx.shadowBlur=18+flash*30;ctx.fill(activePath);ctx.strokeStyle='#f7df8a';ctx.lineWidth=2.5+flash*3;ctx.lineJoin='round';ctx.stroke(activePath);ctx.restore();
+  for(let i=0;i<MAP_STAGES.length;i++){
+    const node=MAP_STAGES[i],active=i===stageIndex,completed=i<stageIndex,nx=node.x*W,ny=node.y*H;
+    ctx.save();ctx.globalAlpha=active?.35+.65*flash:1;ctx.shadowColor=active||completed?'#f7d978':'#0a1714';ctx.shadowBlur=active?12+flash*18:completed?14:7;ctx.fillStyle=active?'#a64e35':completed?'#b38c43':'#183b34cc';ctx.strokeStyle=active?'#ffe58f':completed?'#f8e6a5':'#d1c18a99';ctx.lineWidth=active?4:completed?3:2;ctx.beginPath();ctx.arc(nx,ny,active?25:completed?21:18,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.restore();
+    drawText(String(i+1),nx,ny+(active?1:0),active?20:completed?17:15,'center',active?`rgba(255,242,189,${.35+.65*flash})`:completed?'#fff3bd':'#ded5b9','sans',false);
+  }
+  roundRect(W/2-360,566,720,125,20,'#102a26e8','#d9c47f');
+  drawText('富春江行旅圖',W/2,45,32,'center','#fff0bd','serif');
+  drawText(stage.title,W/2,596,28,'center','#f7df91','serif',false);
+  drawText(stage.subtitle,W/2,632,19,'center','#e8eee2','sans',false);
+  drawText('區域即將展開　按 Enter／空白鍵或點擊略過',W/2,668,15,'center','#b9cec3','sans',false);
+}
+
+function drawVictoryCelebration(){
+  drawPlay();
+  const t=performance.now()/1000;
+  ctx.fillStyle='#06171380';ctx.fillRect(0,0,W,H);
+  ctx.save();
+  for(let i=0;i<42;i++){
+    const x=(i*137+t*(22+i%5*5))%(W+80)-40,y=(i*83+t*(32+i%4*8))%(H+120)-60;
+    ctx.save();ctx.translate(x,y);ctx.rotate(t*(.5+i%3*.2)+i);ctx.globalAlpha=.45+(i%4)*.12;ctx.fillStyle=i%3===0?'#f5df82':i%3===1?'#d89055':'#b9dfca';ctx.fillRect(-3,-8,6,16);ctx.restore();
+  }
+  ctx.restore();
+  const glow=.72+Math.sin(t*3)*.12;
+  ctx.save();ctx.shadowColor='#f4d66d';ctx.shadowBlur=30*glow;ctx.fillStyle='#9c3f32';ctx.strokeStyle='#f2d77b';ctx.lineWidth=4;ctx.beginPath();ctx.arc(W/2,142,72,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.restore();
+  drawText('過關',W/2,142,43,'center','#fff1bd','serif',false);
+  roundRect(W/2-390,232,780,300,24,'#efe5cedf','#d8bd70');
+  drawText('破浪伏魔・富春歸澄',W/2,287,48,'center','#73402f','serif',false);
+  drawText('奔浪水獸已伏，急湍止息，濁氣盡散。',W/2,356,24,'center','#334f45','serif',false);
+  drawText('富春江重現清明，奇山異水盡入心中。',W/2,400,24,'center','#334f45','serif',false);
+  drawText(`本次悟境 ${score}　・　行旅領悟 ${collected.length}`,W/2,469,22,'center','#8d4939','sans',false);
+  const button=CELEBRATION_UI.continue,pulse=.86+Math.sin(t*4)*.08;
+  ctx.save();ctx.globalAlpha=pulse;roundRect(button.x,button.y,button.w,button.h,14,'#8e4937','#f0d98e');ctx.restore();
+  drawText('查看遊歷成果',W/2,button.y+29,23,'center','#fff7dc','sans',false);
+  drawText('按 Enter 或點選按鈕繼續',W/2,670,17,'center','#f5e9c8','sans');
+}
 
 function drawEnding(){
   drawBackground();ctx.fillStyle='#07161388';ctx.fillRect(0,0,W,H);
@@ -949,7 +1530,7 @@ function drawEnding(){
 
   drawText('本次遊歷',312,130,26,'center','#254b40','serif',false);
   drawText(`悟境 ${score}`,312,185,40,'center','#8e483b','serif',false);
-  drawText(`答題：對 ${quizCorrect}／共 ${quizTotal}　山水印記：${collected.length}`,312,238,20,'center','#3d5c52','sans',false);
+  drawText(`答題：對 ${quizCorrect}／共 ${quizTotal}　行旅領悟：${collected.length}`,312,238,20,'center','#3d5c52','sans',false);
   drawText('急湍止息，濁霧消散；心中亦復清明。',312,282,19,'center','#5d5545','serif',false);
   drawText('留下姓名或代號',ENDING_UI.input.x,320,18,'left','#254b40','sans',false);
   ctx.lineWidth=document.activeElement===nameInput?4:2;
@@ -961,18 +1542,17 @@ function drawEnding(){
   }
   const submitFill=leaderboard.submitted?'#587c64':leaderboard.submitting?'#8a866f':'#254b40';
   roundRect(ENDING_UI.submit.x,ENDING_UI.submit.y,ENDING_UI.submit.w,ENDING_UI.submit.h,12,submitFill,'#d8c996');
-  drawText(leaderboard.submitted?'成績已登錄':leaderboard.submitting?'正在送出…':'送出成績',312,ENDING_UI.submit.y+27,22,'center','#fff','sans',false);
+  drawText(leaderboard.submitted?'已加入排名':leaderboard.submitting?'正在儲存…':'加入本機排名',312,ENDING_UI.submit.y+27,22,'center','#fff','sans',false);
   if(leaderboard.error)drawText(leaderboard.error,312,510,17,'center','#9b3f35','sans',false);
   else if(leaderboard.message)drawText(leaderboard.message,312,510,18,'center','#2f6a4e','sans',false);
-  else drawText('輸入後按 Enter 或點擊送出',312,510,16,'center','#716957','sans',false);
-  drawText('分數來自戰鬥、答題、印記與釣魚挑戰',312,550,16,'center','#716957','sans',false);
+  else drawText('輸入後按 Enter 或點擊加入本機排名',312,510,16,'center','#716957','sans',false);
+  drawText('每章完成五題小學堂；分數亦來自戰鬥與探索',312,550,16,'center','#716957','sans',false);
   roundRect(ENDING_UI.restart.x,ENDING_UI.restart.y,ENDING_UI.restart.w,ENDING_UI.restart.h,10,'#d8c996','#6a5336');
   drawText('再次遊歷富春江',312,ENDING_UI.restart.y+21,18,'center','#254b40','sans',false);
 
-  drawText('富春江悟境排行榜',918,130,27,'center','#f4e6bd','serif',false);
+  drawText('本機悟境排行榜',918,130,27,'center','#f4e6bd','serif',false);
   drawText('名次',630,164,15,'left','#b9cbbf','sans',false);drawText('姓名／代號',690,164,15,'left','#b9cbbf','sans',false);drawText('答對',1080,164,15,'right','#b9cbbf','sans',false);drawText('悟境',1200,164,15,'right','#b9cbbf','sans',false);
-  if(leaderboard.loading)drawText('正在取得排行榜…',918,350,20,'center','#d8e8d8','sans',false);
-  else if(!leaderboard.rows.length)drawText(leaderboard.error||'尚無成績，等你留下第一筆！',918,350,19,'center','#d8e8d8','sans',false);
+  if(!leaderboard.rows.length)drawText(leaderboard.error||'尚無本機成績，等你留下第一筆！',918,350,19,'center','#d8e8d8','sans',false);
   else leaderboard.rows.forEach((row,i)=>{
     const y=190+i*43;roundRect(620,y-16,595,36,8,i%2?'#f3ead511':'#f3ead51c');
     const rankColor=i===0?'#f1d77b':i===1?'#d9e0dd':i===2?'#c88f65':'#d8e8d8';
@@ -981,24 +1561,51 @@ function drawEnding(){
     drawText(`${row.quiz_correct}/${row.quiz_total}`,1080,y,16,'right','#b9cbbf','sans',false);
     drawText(String(row.score),1200,y,20,'right',rankColor,'sans',false);
   });
-  drawText('依悟境排序；同分時依答對題數',918,646,15,'center','#9fb5aa','sans',false);
+  drawText('僅儲存在此裝置；依悟境排序，同分時依答對題數',918,646,15,'center','#9fb5aa','sans',false);
 }
 
-function render(){ctx.clearRect(0,0,W,H);if(gameState==='title')drawTitle();else if(gameState==='play')drawPlay();else if(gameState==='gameover')drawGameOver();else if(gameState==='ending')drawEnding();}
+function render(){ctx.clearRect(0,0,W,H);if(gameState==='title')drawTitle();else if(gameState==='map')drawStageMap();else if(gameState==='play')drawPlay();else if(gameState==='gameover')drawGameOver();else if(gameState==='celebration')drawVictoryCelebration();else if(gameState==='ending')drawEnding();}
 
 function loop(ts){const dt=Math.min(.033,(ts-last)/1000||0);last=ts;
-  if(gameState==='title'&&(pressed['enter']||pressed[' ']||pressed['mouse'])){gameState='play';resetGame();}
+  if(gameState==='title'&&(pressed['enter']||pressed['mouse'])){gameState='play';resetGame();}
   if(gameState==='gameover'&&pressed['r']){gameState='play';startLevel(level);}
+  if(gameState==='celebration'&&pressed['enter'])startLevel(5);
   if(gameState==='ending'&&pressed['enter']&&leaderboard.submitted)restartFromEnding();
   update(dt);render();pressed=Object.create(null);released=Object.create(null);requestAnimationFrame(loop);
 }
 canvas.addEventListener('pointerdown',e=>{
+  if(openingActive)return;
   ensureAudio();
+  if(level!==3)playBackgroundMusic();
   const r=canvas.getBoundingClientRect(),x=(e.clientX-r.left)*W/r.width,y=(e.clientY-r.top)*H/r.height;
   if(activeQuiz){handleQuizPointer(x,y);return;}
+  if(soundGame&&soundGame.active){handleSoundPointer(x,y);return;}
+  if(gameState==='gameover'){gameState='play';startLevel(level);return;}
+  if(gameState==='celebration'){handleCelebrationPointer(x,y);return;}
   if(gameState==='ending'){handleEndingPointer(x,y);return;}
   pressed['mouse']=true;if(gameState==='title'){gameState='play';resetGame();}
 });
+function setVirtualKey(button,key,down,pointerId){
+  if(openingActive)return;
+  ensureAudio();
+  if(level!==3)playBackgroundMusic();
+  if(down){
+    if(soundGame&&soundGame.active&&key===' '&&soundGame.clueDelay<=0&&soundGame.replayCooldown<=0)playSoundClue();
+    if(gameState==='title'){gameState='play';resetGame();}
+    if(gameState==='gameover'){gameState='play';startLevel(level);return;}
+    if(!keys[key])pressed[key]=true;keys[key]=true;button.classList.add('is-held');
+    if(pointerId!==undefined&&button.setPointerCapture)button.setPointerCapture(pointerId);
+  }else{
+    if(keys[key])released[key]=true;keys[key]=false;button.classList.remove('is-held');
+  }
+}
+for(const button of touchControls.querySelectorAll('[data-key]')){
+  const key=button.dataset.key;
+  button.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();setVirtualKey(button,key,true,e.pointerId);});
+  button.addEventListener('pointerup',e=>{e.preventDefault();e.stopPropagation();setVirtualKey(button,key,false);});
+  button.addEventListener('pointercancel',e=>setVirtualKey(button,key,false));
+  button.addEventListener('contextmenu',e=>e.preventDefault());
+}
 requestAnimationFrame(loop);
 })();
 </script>
