@@ -42,7 +42,7 @@
 <div id="wrap">
   <canvas id="game" width="1280" height="720" aria-label="山水問心：富春江行橫向卷軸遊戲"></canvas>
   <div id="openingScreen" class="needs-play" aria-label="開場影片">
-    <video id="openingVideo" src="開頭影片剪.mp4" preload="auto" playsinline></video>
+    <video id="openingVideo" src="開頭影片順暢版.mp4" preload="auto" playsinline></video>
     <button id="openingPlay" class="opening-btn" type="button">播放開場影片</button>
     <button id="openingSkip" class="opening-btn" type="button">略過影片</button>
   </div>
@@ -227,7 +227,7 @@ const backgroundMusic=new Audio('江上泛舟.mp3');
 backgroundMusic.preload='auto';backgroundMusic.playsInline=true;backgroundMusic.loop=true;backgroundMusic.volume=.32;backgroundMusic.load();
 let backgroundMusicPlayPending=false;
 let openingActive=true;
-let openingAwaitingMetadata=false;
+
 const natureAudio={
   spring:new Audio('流水聲.mp3'),
   bird:new Audio('鳥鳴聲.mp3'),
@@ -263,11 +263,6 @@ function finishOpening(){
 }
 function playOpeningVideo(){
   if(!openingActive)return;
-  if(openingVideo.readyState<1){
-    if(!openingAwaitingMetadata){openingAwaitingMetadata=true;openingVideo.addEventListener('loadedmetadata',playOpeningVideo,{once:true});}
-    return;
-  }
-  openingAwaitingMetadata=false;
   const result=openingVideo.play();
   if(result)result.then(()=>openingScreen.classList.remove('needs-play')).catch(()=>openingScreen.classList.add('needs-play'));
 }
@@ -1572,6 +1567,7 @@ function drawEnding(){
 function render(){ctx.clearRect(0,0,W,H);if(gameState==='title')drawTitle();else if(gameState==='map')drawStageMap();else if(gameState==='play')drawPlay();else if(gameState==='gameover')drawGameOver();else if(gameState==='celebration')drawVictoryCelebration();else if(gameState==='ending')drawEnding();}
 
 function loop(ts){const dt=Math.min(.033,(ts-last)/1000||0);last=ts;
+  if(openingActive){requestAnimationFrame(loop);return;}
   if(gameState==='title'&&(pressed['enter']||pressed['mouse'])){gameState='play';resetGame();}
   if(gameState==='gameover'&&pressed['r']){gameState='play';startLevel(level);}
   if(gameState==='celebration'&&pressed['enter'])startLevel(5);
